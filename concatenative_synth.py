@@ -21,6 +21,23 @@ def generate_random_phrases(words, phrase_length=2, num_phrases=5):
     return phrases
 
 
+def load_words(filename, limit=10):
+    '''
+    Gets a randomised set of words from a list in a textfile
+    
+    :param filename: path to the list of words 
+    :param limit: the number of words to fetch
+
+    :return list of shuffled words
+    '''
+
+    with open(filename, 'r', encoding='utf-8') as f:
+        words = [line.strip() for line in f if line.strip()]
+    
+    random.shuffle(words)
+    return words[:limit + 1] if len(words) >= limit else words
+
+
 def search_sounds_for_word(client, 
                            word, 
                            min_results=5,
@@ -53,11 +70,9 @@ def download_previews(sounds, out_dir):
 def fetch_corpus(client, words):
     corpus = {}
 
-    phrases = generate_random_phrases(words, phrase_length=2, num_phrases=10)
-
-    for phrase in phrases:
-        corpus[phrase] = search_sounds_for_word(client, phrase)
-        print(f"Found {len(corpus[phrase])} sounds for phrase: {phrase}")
+    for word in words:
+        corpus[word] = search_sounds_for_word(client, word)
+        print(f"Found {len(corpus[word])} sounds for word: {word}")
 
     return corpus
 
@@ -85,7 +100,7 @@ def concatenate_snippets(snippets, output_sr = 44100):
 if __name__=="__main__":
     print("Concatenative Synth")
 
-    words = ["Elephant", "Sunshine", "Harmony", "Labyrinth", "Melody", "Ethereal"]
+    words = load_words("words.txt")
 
     client = freesound.FreesoundClient()
     client.set_token(API_KEY, "token")
