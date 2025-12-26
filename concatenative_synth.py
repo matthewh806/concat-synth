@@ -13,6 +13,19 @@ current_directory = Path()
 download_directory = current_directory / "audio_downloads"
 
 def generate_random_phrases(words, phrase_length=2, num_phrases=5):
+    '''
+    Given a list of words will randomly generate a list of phrases 
+    of a specified length
+
+    This doesn't really work well in the case of the freesound API...
+    So its currently unused
+    
+    :param words: List of words to be used in phrase creation
+    :param phrase_length: Number of words in each phrase
+    :param num_phrases: Number of phrases to generate
+
+    :return list of generated phrases
+    '''
     phrases = []
     for _ in range(num_phrases):
         phrase = " ".join(random.sample(words, phrase_length))
@@ -43,6 +56,18 @@ def search_sounds_for_word(client,
                            min_results=5,
                            max_results=10,
                            duration_range=(0.1, 0.5)):
+    '''
+    Searches for sounds matching a word or phrase
+    The actual number of results returned will be 
+    a randomised value between min_results & max_results
+    OR fewer if less results than min_results are found
+    
+    :param client: Freesound client instance
+    :param word: Search term
+    :param min_results: Minimum number of results to return
+    :param max_results: Maximum number of results to return
+    :param duration_range: Duration range for a sound (seconds)
+    '''
     
     num_results = random.randint(min_results, max_results)
     
@@ -61,6 +86,13 @@ def search_sounds_for_word(client,
 
 
 def download_previews(sounds, out_dir):
+    '''
+    Downloads the "previews" for each sound provided
+    These are downloaded in hq & in mp3 format
+    
+    :param sounds: List of Sound instances
+    :param out_dir: Directory to save the output files in
+    '''
     for sound in sounds:
         sound_name= Path(sound.name).stem
         filename = sound_name + ".mp3"
@@ -68,6 +100,15 @@ def download_previews(sounds, out_dir):
     
 
 def fetch_corpus(client, words):
+    '''
+    Creates a corpus of words and the associated sounds instances
+    For each word in the corpus there is a list of sound instances
+    
+    :param client: Freesound client instance
+    :param words: List of words to use to generate the corpus
+
+    :return dictionary containing sound instances for each word
+    '''
     corpus = {}
 
     for word in words:
@@ -78,6 +119,16 @@ def fetch_corpus(client, words):
 
 
 def load_snippets(directory, target_sr = 44100):
+    '''
+    Loads the audio snippets into numpy arrays
+    Does sample rate conversion if neccessary to ensure
+    they are all consistent
+    
+    :param directory: location of the audio files
+    :param target_sr: sample rate to convert to
+
+    :return list of np.array representations of the sound
+    '''
     snippets = []
 
     for path in directory.iterdir():
@@ -89,6 +140,15 @@ def load_snippets(directory, target_sr = 44100):
 
 
 def concatenate_snippets(snippets, output_sr = 44100):
+    '''
+    Generates a single concatenated output file randomly
+    from the snippets provided
+    
+    :param snippets: List of sample data as numpy arrays
+    :param output_sr: Sample rate to save the output as
+
+    :return concatenated audio as a numpy array
+    '''
     total_num_samples = sum( len(snippet) for snippet in snippets)
     print(f"Generating a concatenated file of length {total_num_samples / output_sr}")
     
