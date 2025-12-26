@@ -89,13 +89,18 @@ class FreesoundBackend(AudioBackend):
                     )
                 
 class SliceDuration:
+    def __init__(self, length = 0.5):
+        self.length = length
+
     def __call__(self, info, ydl):
         duration = info.get("duration")
         if not duration:
             return
 
-        t = duration / 2
-        yield {"start_time": t, "end_time": t}
+        middle = duration / 2
+        start = max(0.0, middle - self.length/2)
+        end = min(duration, middle + self.length/2)
+        yield {"start_time": start, "end_time": end}
 
 
 class DownloadTracker:
@@ -111,10 +116,12 @@ class YoutubeBackend(AudioBackend):
     def __init__(self, 
                  search_terms,
                  output_path,
+                 target_sr = 44100,
                  batch_size = 32,
                  words_per_phrase = 2):
         self.search_terms = search_terms
         self.ouput_path = output_path
+        self.target_sr = target_sr
         self.batch_size = batch_size
         self.words_per_phrase = words_per_phrase 
 
@@ -130,7 +137,7 @@ class YoutubeBackend(AudioBackend):
             "no_warnings": True,
             "paths": {"home": str(download_dir)},
             "outtmpl": "%(id)s.%(ext)s",
-            "download_ranges": SliceDuration(),
+            "download_ranges": SliceDuration(random.uniform(0.1, 1.0)),
             "progress_hooks": [tracker],
             "postprocessors": [{
                 "key": "FFmpegExtractAudio",
