@@ -100,6 +100,11 @@ class SliceDuration:
         middle = duration / 2
         start = max(0.0, middle - self.length/2)
         end = min(duration, middle + self.length/2)
+
+        # avoid tiny ranges
+        if end - start < 0.05:
+            return
+
         yield {"start_time": start, "end_time": end}
 
 
@@ -111,6 +116,9 @@ class DownloadTracker:
         if info.get("status") == "finished":
             self.files.append(info["filename"])
 
+def is_silent(samples, rms_threshold=1e-4):
+    rms = np.sqrt(np.mean(samples**2))
+    return rms < rms_threshold
 
 class YoutubeBackend(AudioBackend):
     def __init__(self, 
@@ -129,15 +137,16 @@ class YoutubeBackend(AudioBackend):
         words = random.sample(self.search_terms, self.words_per_phrase)
         return " ".join(words)
 
-    def _ydl_opts(self, download_dir, tracker):
+    def _ydl_opts(self, download_dir, tracker, slice_dur = 0.1):
 
         return {
             "format": "bestaudio/best",
             "quiet": True,
             "no_warnings": True,
+            "ignore_errors": True,
             "paths": {"home": str(download_dir)},
             "outtmpl": "%(id)s.%(ext)s",
-            "download_ranges": SliceDuration(random.uniform(0.1, 1.0)),
+            "download_ranges": SliceDuration(0.1),
             "progress_hooks": [tracker],
             "postprocessors": [{
                 "key": "FFmpegExtractAudio",
@@ -153,16 +162,33 @@ class YoutubeBackend(AudioBackend):
 
             tracker = DownloadTracker()
 
-            with YoutubeDL(self._ydl_opts(self.ouput_path, tracker)) as ydl:
-                ydl.download([query])
+            # TODO: pass in as param
+            slice_dur = random.uniform(0.1, 0.5)
+
+            with YoutubeDL(self._ydl_opts(self.ouput_path, tracker, slice_dur)) as ydl:
+                try:
+                    ydl.download([query])
+                except Exception as e:
+                    print(f"yt-dlp failed for query '{query}': {e}")
+                    continue
 
             for filename in tracker.files:
                 audio_path = Path(filename).with_suffix(".mp3")
-                samples, sr = librosa.load(audio_path, sr = 44100)
+                samples, sr = librosa.load(audio_path, sr = self.target_sr)
 
+            # yt-dl doesn't always return the exact length of audio requested
+            # So trim manually
+            target_len = int(slice_dur* self.target_sr)
+            if len(samples) >= target_len:
+                start = (len(samples) - target_len) // 2
+                samples = samples[start:start + target_len]
+
+            if is_silent(samples):
+                continue
+            
             yield AudioSnippet(
                 samples=samples,
-                sample_rate=44100,
+                sample_rate=self.target_sr,
                 metadata={
                     "source": "youtube",
                     "query": phrase
