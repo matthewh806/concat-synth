@@ -4,12 +4,17 @@ import sys
 import numpy as np
 import soundfile as sf
 from pathlib import Path
-from backends import AudioSnippet, FreesoundBackend
+from backends import AudioSnippet, FreesoundBackend, YoutubeBackend
+from orchestrator import collect_snippets_parallel
 
 API_KEY = os.environ.get("FREESOUND_API_KEY")
 
 current_directory = Path()
 download_directory = current_directory / "audio_downloads"
+
+def get_random_phrase(word_list, phrase_len = 2):
+    words = random.sample(word_list, phrase_len)
+    return " ".join(words)
 
 def load_words(filename, limit=10):
     '''
@@ -50,9 +55,11 @@ if __name__=="__main__":
     print("Concatenative Synth")
 
     words = load_words("words.txt")
-    backend = FreesoundBackend(words, download_directory)
+    backend = YoutubeBackend(download_directory)
+    max_snippets = 256
+    queries = [get_random_phrase(words) for _ in range(max_snippets)]
+    snippets = collect_snippets_parallel(backend, queries, max_snippets)
 
-    snippets = [snippet for snippet in backend.get_snippets()]
     if len(snippets) == 0:
         print(f"No audio files found in download directory!")
         sys.exit(1)
