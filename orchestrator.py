@@ -12,7 +12,7 @@ def collect_snippets_parallel(
 
     with ThreadPoolExecutor(max_workers=max_workers) as pool:
         futures = {
-            pool.submit(lambda q=query: list(backend.get_snippets(q))): query
+            pool.submit(backend.get_snippets, query): query
             for query in queries
         }
 

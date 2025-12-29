@@ -1,44 +1,30 @@
 from abc import ABC, abstractmethod
-from typing import Iterable, Dict, Any
 from pathlib import Path
-import numpy as np
 import freesound
 import random
 import os
 import uuid
-import librosa
 from yt_dlp import YoutubeDL
 
-class AudioSnippet:
-    def __init__(
-            self,
-            samples: np.ndarray,
-            sample_rate: int,
-            metadata: Dict[str, Any] | None = None,
-    ):
-        self.samples = samples
-        self.sample_rate = sample_rate
-        self.metadata = metadata or {}
 
-class AudioBackend(ABC):
+class AudioDownloader(ABC):
     @abstractmethod
-    def get_snippets(self, query) -> Iterable[AudioSnippet]:
+    def get_snippets(self, query) -> list[Path]:
         pass
 
-class FreesoundBackend(AudioBackend):
+
+class FreesoundAudioDownloader(AudioDownloader):
     API_KEY = os.environ.get("FREESOUND_API_KEY")
 
     def __init__(self,  
                  output_path, 
-                 target_sr = 44100,
-                 min_per_term = 5, 
-                 max_per_term = 10, 
+                 target_sr = 44100, 
+                 number_of_results = 10, 
                  duration_range=(0.1, 0.5)):
         self.client = freesound.FreesoundClient()
         self.output_path = output_path
         self.target_sr = target_sr
-        self.min_per_term = min_per_term
-        self.max_per_term = max_per_term
+        self.number_of_results = number_of_results
         self.duration_range = duration_range
 
         self.client.set_token(self.API_KEY, "token")
@@ -63,27 +49,19 @@ class FreesoundBackend(AudioBackend):
                 f"duration:[{self.duration_range[0]} TO {self.duration_range[1]}]"
             )
 
-            num_results = random.randint(self.min_per_term, self.max_per_term)
             results = self.client.search(
                 query = query,
                 fields="id,name,previews",
                 filter = filter_str,
-                page_size=num_results
+                page_size=self.number_of_results
             )
 
+            paths = []
             for sound in results:
                 sound_path = self._download_preview(sound, self.output_path)
-                samples, sr = librosa.load(sound_path, sr=self.target_sr)
-
-                yield AudioSnippet(
-                    samples=samples,
-                    sample_rate=sr,
-                    metadata={
-                        "source": "freesound",
-                        "id": sound.id,
-                        "name": sound.name,
-                    }
-                )
+                paths.append(sound_path)
+        
+            return paths
                 
 
 class SliceDuration:
@@ -114,11 +92,8 @@ class DownloadTracker:
         if info.get("status") == "finished":
             self.files.append(info["filename"])
 
-def is_silent(samples, rms_threshold=1e-4):
-    rms = np.sqrt(np.mean(samples**2))
-    return rms < rms_threshold
 
-class YoutubeBackend(AudioBackend):
+class YoutubeAudioDownloader(AudioDownloader):
     def __init__(self, 
                  output_path,
                  target_sr = 44100):
@@ -162,25 +137,9 @@ class YoutubeBackend(AudioBackend):
                 print(f"yt-dlp failed for query '{query}': {e}")
                 return
 
+        paths = []
         for filename in tracker.files:
             audio_path = Path(filename).with_suffix(".mp3")
-            samples, _ = librosa.load(audio_path, sr = self.target_sr)
+            paths.append(audio_path)
 
-        # yt-dl doesn't always return the exact length of audio requested
-        # So trim manually
-        target_len = int(slice_dur* self.target_sr)
-        if len(samples) >= target_len:
-            start = (len(samples) - target_len) // 2
-            samples = samples[start:start + target_len]
-
-        if is_silent(samples):
-            return
-
-        yield AudioSnippet(
-            samples=samples,
-            sample_rate=self.target_sr,
-            metadata={
-                "source": "youtube",
-                "query": query
-            }
-        )
+        return paths

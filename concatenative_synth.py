@@ -5,8 +5,9 @@ import argparse
 import numpy as np
 import soundfile as sf
 from pathlib import Path
-from backends import AudioSnippet, FreesoundBackend, YoutubeBackend
+from backends import FreesoundAudioDownloader, YoutubeAudioDownloader
 from orchestrator import collect_snippets_parallel
+from audio_loader import audio_loader
 
 API_KEY = os.environ.get("FREESOUND_API_KEY")
 
@@ -56,24 +57,35 @@ def run_download_backend(backend_name, words_path, output_path, max_snippets):
     words = load_words(words_path)
 
     if backend_name == "youtube":
-        backend = YoutubeBackend(download_directory)
+        backend = YoutubeAudioDownloader(download_directory)
         queries = [get_random_phrase(words) for _ in range(max_snippets)]
     else: # freesound
-        backend = FreesoundBackend(download_directory)
         queries = words
+        results_per_word = 1 if max_snippets <= len(words) else int(len(words) / max_snippets)
+        backend = FreesoundAudioDownloader(download_directory, number_of_results=results_per_word)
 
-    snippets = collect_snippets_parallel(backend, queries, max_snippets)
+    download_paths = collect_snippets_parallel(backend, queries, max_snippets)
 
-    if len(snippets) == 0:
+    if len(download_paths) == 0:
         print(f"No audio files found in download directory!")
         sys.exit(1)
 
+    snippets = [snip for path in download_paths if (snip := audio_loader(path)) is not None]
     concatenated = concatenate_snippets(snippets)
     sf.write(output_path, concatenated, 44100)
 
 
-def run_dir_backend(input_dir, output_path):
-    pass
+def run_dir_backend(input_dir, output_path, extension=".mp3"):
+    audio_dir = Path(input_dir)
+    files = list(audio_dir.rglob(f"*{extension}"))
+
+    if len(files) == 0:
+        print(f"No audio files found in {input_dir}!")
+        sys.exit(1)
+
+    snippets = [snip for path in files if (snip := audio_loader(path)) is not None]
+    concatenated = concatenate_snippets(snippets)
+    sf.write(output_path, concatenated, 44100)
 
 
 def main():
@@ -106,7 +118,7 @@ def main():
     # Subcommand: Use local files
     #---------------------------------
     dir_parser = subparsers.add_parser("dir", help="Use existing audio files from directory")
-    dir_parser.add_argument("input_dir, type=str", help="Directory containing audio files")
+    dir_parser.add_argument("input_dir", type=str, help="Directory containing audio files")
     dir_parser.add_argument(
         "--out", type=str, default="output.wav",
         help="Output WAV file path"
