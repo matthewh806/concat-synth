@@ -35,25 +35,34 @@ def load_words(filename, limit=10):
     return words[:limit + 1] if len(words) >= limit else words
 
 
-def concatenate_snippets(snippets, output_sr = 44100):
+def concatenate_snippets(snippets, output_sr = 44100, cross_fade = 50):
     '''
     Generates a single concatenated output file randomly
     from the snippets provided
     
     :param snippets: List of sample data as numpy arrays
     :param output_sr: Sample rate to save the output as
+    :param cross_fade: Cross fade length (milliseconds)
 
     :return concatenated audio as a numpy array
     '''
-    total_num_samples = sum( len(snippet.samples) for snippet in snippets)
-    print(f"Generating a concatenated file of length {total_num_samples / output_sr}")
-    
     random.shuffle(snippets)
-    output = np.concatenate([snippet.samples for snippet in snippets])
+    output = snippets[0].samples.copy()
+    cross_fade_samples = int((cross_fade / 1000) * output_sr)
+
+    for snippet in snippets[1:]:
+        samples = snippet.samples
+        cross_fade_amount = len(samples) if len(samples) < cross_fade_samples else cross_fade_samples
+        fade_out = output[-cross_fade_amount:] * np.linspace(1, 0, cross_fade_amount)
+        fade_in = samples[:cross_fade_amount] * np.linspace(0, 1, cross_fade_amount)
+        overlapping_region = fade_out + fade_in
+        output = np.concatenate([output[:-cross_fade_amount], overlapping_region, samples[cross_fade_amount:]])
+
+    print(f"Generated a concatenated file of length {(len(output) / output_sr):.2f} seconds")
     return output
 
 
-def run_download_backend(backend_name, words_path, output_path, max_snippets, max_snippet_length):
+def run_download_backend(backend_name, words_path, output_path, max_snippets = 64, max_snippet_length = 0.5, cross_fade = 50):
     words = load_words(words_path)
 
     if backend_name == "youtube":
@@ -71,11 +80,11 @@ def run_download_backend(backend_name, words_path, output_path, max_snippets, ma
         sys.exit(1)
 
     snippets = [snip for path in download_paths if (snip := audio_loader(path, max_clip_length=max_snippet_length)) is not None]
-    concatenated = concatenate_snippets(snippets)
+    concatenated = concatenate_snippets(snippets, cross_fade=cross_fade)
     sf.write(output_path, concatenated, 44100)
 
 
-def run_dir_backend(input_dir, output_path, max_snippet_length, extension=".mp3"):
+def run_dir_backend(input_dir, output_path, max_snippet_length = 0.5, cross_fade = 50, extension=".mp3"):
     audio_dir = Path(input_dir)
     files = list(audio_dir.rglob(f"*{extension}"))
 
@@ -84,7 +93,7 @@ def run_dir_backend(input_dir, output_path, max_snippet_length, extension=".mp3"
         sys.exit(1)
 
     snippets = [snip for path in files if (snip := audio_loader(path, max_clip_length=max_snippet_length)) is not None]
-    concatenated = concatenate_snippets(snippets)
+    concatenated = concatenate_snippets(snippets, cross_fade=cross_fade)
     sf.write(output_path, concatenated, 44100)
 
 
@@ -98,6 +107,10 @@ def main():
     parent_parser.add_argument(
         "--max-slice-length", type=float, default=0.5,
         help="Maximum length of each slice (seconds)"
+    )
+    parent_parser.add_argument(
+        "--fade", type=int, default=50,
+        help="Cross fade length (milliseconds)"
     )
 
     parser = argparse.ArgumentParser("Concatenative Audio Synthesis")
@@ -134,13 +147,15 @@ def main():
             words_path = args.words,
             output_path = args.out,
             max_snippets = args.max_snippets,
-            max_snippet_length=args.max_slice_length
+            max_snippet_length=args.max_slice_length,
+            cross_fade=args.fade
         )
     elif args.command == "dir":
         run_dir_backend(
             input_dir= args.input_dir,
             output_path= args.out,
-            max_snippet_length=args.max_slice_length
+            max_snippet_length=args.max_slice_length,
+            cross_fade=args.fade
         )
     else:
         parser.print_help()
