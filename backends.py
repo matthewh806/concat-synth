@@ -135,7 +135,7 @@ class YoutubeAudioDownloader(AudioDownloader):
                 ydl.download([search_query])
             except Exception as e:
                 print(f"yt-dlp failed for query '{query}': {e}")
-                return
+                return []
 
         paths = []
         for filename in tracker.files:
