@@ -1,6 +1,11 @@
 import argparse
 from .concatenative_synth import run_download_backend, run_dir_backend
 
+'''
+This is a script which defines the CLI for the concatenative synthesis system.
+From the installed package it can be run as: concat-synth
+'''
+
 def main():
     parent_parser = argparse.ArgumentParser(add_help=False)
     parent_parser.add_argument(
