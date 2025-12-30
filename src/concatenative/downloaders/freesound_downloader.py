@@ -3,14 +3,26 @@ from pathlib import Path
 import freesound
 import os
 
+def get_freesound_api_key():
+     class MissingAPIKeyError(RuntimeError):
+        pass
+
+     key = os.environ.get("FREESOUND_API_KEY")
+     if not key:
+          raise MissingAPIKeyError(
+               "Freesound API key not found.\n"
+               "Set FREESOUND_API_KEY environment variable"
+          )
+     
+     return key
+
+
 class FreesoundAudioDownloader(AudioDownloader):
     '''
     AudioDownloader backend implementation which uses
     the freesound API to https://freesound.org/docs/api/
     download audio samples
     '''
-
-    API_KEY = os.environ.get("FREESOUND_API_KEY")
 
     def __init__(self,  
                  output_path, 
@@ -23,7 +35,8 @@ class FreesoundAudioDownloader(AudioDownloader):
         self.number_of_results = number_of_results
         self.duration_range = duration_range
 
-        self.client.set_token(self.API_KEY, "token")
+        api_key = get_freesound_api_key()
+        self.client.set_token(api_key, "token")
 
     
     def _download_preview(self, sound, out_dir):
