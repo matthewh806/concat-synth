@@ -75,7 +75,7 @@ concat-synth download youtube --words words.txt --max-snippets 32 --out youtube_
   Command-line Options
 
    - `--out <path>`: Path to save the output .wav file. (Default: output.wav)
-   - `--max-slice-length` <seconds>: Maximum length of each audio snippet. (Default: 0.5)
+   - `--max-slice-length` <seconds>: Maximum length of each audio snippet in seconds. (Default: 0.5)
    - `--fade <ms>`: Duration of the crossfade in milliseconds. (Default: 50)
    - `--words <path>`: Path to a text file containing words to use as search terms. (Default: words.txt)
    - `--max-snippets <int>`: The maximum number of audio snippets to download and use. (Default: 32)
