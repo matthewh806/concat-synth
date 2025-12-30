@@ -1,6 +1,7 @@
 import random
 import os
 import sys
+import math
 import numpy as np
 import soundfile as sf
 from pathlib import Path
@@ -39,7 +40,7 @@ def load_words(filename, limit=10):
         words = [line.strip() for line in f if line.strip()]
     
     random.shuffle(words)
-    return words[:limit + 1] if len(words) >= limit else words
+    return words[:limit] if len(words) >= limit else words
 
 
 def concatenate_snippets(snippets, output_sr = 44100, cross_fade = 50):
@@ -97,7 +98,7 @@ def run_download_backend(backend_name, words_path, output_path, max_snippets = 6
         queries = [get_random_phrase(words) for _ in range(max_snippets)]
     else: # freesound
         queries = words
-        results_per_word = 1 if max_snippets <= len(words) else int(len(words) / max_snippets)
+        results_per_word = 1 if max_snippets <= len(words) else math.ceil(len(words) / max_snippets)
         backend = FreesoundAudioDownloader(download_directory, number_of_results=results_per_word)
 
     download_paths = collect_snippets_parallel(backend, queries, max_snippets)
@@ -108,7 +109,7 @@ def run_download_backend(backend_name, words_path, output_path, max_snippets = 6
 
     snippets = [snip for path in download_paths if (snip := audio_loader(path, max_clip_length=max_snippet_length)) is not None]
     concatenated = concatenate_snippets(snippets, cross_fade=cross_fade)
-    sf.write(output_path, concatenated, 44100)
+    sf.write(output_path, concatenated, samplerate=44100, format="wav")
 
 
 def run_dir_backend(input_dir, output_path, max_snippet_length = 0.5, cross_fade = 50, extension=".mp3"):
