@@ -1,5 +1,5 @@
 import argparse
-from concatenative_synth import run_download_backend, run_dir_backend
+from .concatenative_synth import run_download_backend, run_dir_backend
 
 def main():
     parent_parser = argparse.ArgumentParser(add_help=False)

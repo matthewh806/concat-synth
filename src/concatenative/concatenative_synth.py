@@ -4,8 +4,8 @@ import sys
 import numpy as np
 import soundfile as sf
 from pathlib import Path
-from downloaders import FreesoundAudioDownloader, YoutubeAudioDownloader
-from core import collect_snippets_parallel, audio_loader
+from .downloaders import FreesoundAudioDownloader, YoutubeAudioDownloader
+from .core import collect_snippets_parallel, audio_loader
 
 API_KEY = os.environ.get("FREESOUND_API_KEY")
 
