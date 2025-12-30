@@ -1,18 +1,7 @@
-from typing import Dict, Any
+from .audio_snippet import AudioSnippet
 from pathlib import Path
 import numpy as np
 import librosa
-
-class AudioSnippet:
-    def __init__(
-            self,
-            samples: np.ndarray,
-            sample_rate: int,
-            metadata: Dict[str, Any] | None = None,
-    ):
-        self.samples = samples
-        self.sample_rate = sample_rate
-        self.metadata = metadata or {}
 
 def is_silent(samples, rms_threshold=1e-4):
     '''

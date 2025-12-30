@@ -1,83 +1,9 @@
-from abc import ABC, abstractmethod
+from .audio_downloader import AudioDownloader
 from pathlib import Path
-import freesound
 import random
-import os
 import uuid
 from yt_dlp import YoutubeDL
 
-
-class AudioDownloader(ABC):
-    '''
-    Abstract class definining an interface for the 
-    audio downloader subclasses
-    '''
-    @abstractmethod
-    def get_snippets(self, query) -> list[Path]:
-        pass
-
-
-class FreesoundAudioDownloader(AudioDownloader):
-    '''
-    AudioDownloader backend implementation which uses
-    the freesound API to https://freesound.org/docs/api/
-    download audio samples
-    '''
-
-    API_KEY = os.environ.get("FREESOUND_API_KEY")
-
-    def __init__(self,  
-                 output_path, 
-                 target_sr = 44100, 
-                 number_of_results = 10, 
-                 duration_range=(0.1, 0.5)):
-        self.client = freesound.FreesoundClient()
-        self.output_path = output_path
-        self.target_sr = target_sr
-        self.number_of_results = number_of_results
-        self.duration_range = duration_range
-
-        self.client.set_token(self.API_KEY, "token")
-
-    
-    def _download_preview(self, sound, out_dir):
-        '''
-        Downloads the "previews" for each sound provided
-        These are downloaded in hq & in mp3 format
-        
-        :param sounds: List of Sound instances
-        :param out_dir: Directory to save the output files in
-        '''
-        sound_name= Path(sound.name).stem
-        filename = sound_name + ".mp3"
-        sound.retrieve_preview(out_dir, filename, quality="hq")
-
-        return out_dir / filename
-
-    def get_snippets(self, query):
-            '''
-            :param query: string to use as the query when calling the API
-
-            :return paths of the downloaded files in a list
-            '''
-            filter_str = (
-                f"duration:[{self.duration_range[0]} TO {self.duration_range[1]}]"
-            )
-
-            results = self.client.search(
-                query = query,
-                fields="id,name,previews",
-                filter = filter_str,
-                page_size=self.number_of_results
-            )
-
-            paths = []
-            for sound in results:
-                sound_path = self._download_preview(sound, self.output_path)
-                paths.append(sound_path)
-        
-            return paths
-                
 
 class SliceDuration:
     '''
