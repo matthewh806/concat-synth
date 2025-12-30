@@ -8,12 +8,22 @@ from yt_dlp import YoutubeDL
 
 
 class AudioDownloader(ABC):
+    '''
+    Abstract class definining an interface for the 
+    audio downloader subclasses
+    '''
     @abstractmethod
     def get_snippets(self, query) -> list[Path]:
         pass
 
 
 class FreesoundAudioDownloader(AudioDownloader):
+    '''
+    AudioDownloader backend implementation which uses
+    the freesound API to https://freesound.org/docs/api/
+    download audio samples
+    '''
+
     API_KEY = os.environ.get("FREESOUND_API_KEY")
 
     def __init__(self,  
@@ -45,6 +55,11 @@ class FreesoundAudioDownloader(AudioDownloader):
         return out_dir / filename
 
     def get_snippets(self, query):
+            '''
+            :param query: string to use as the query when calling the API
+
+            :return paths of the downloaded files in a list
+            '''
             filter_str = (
                 f"duration:[{self.duration_range[0]} TO {self.duration_range[1]}]"
             )
@@ -65,6 +80,10 @@ class FreesoundAudioDownloader(AudioDownloader):
                 
 
 class SliceDuration:
+    '''
+    SliceDuration callable method for determining the
+    the size clip to extract by yt-dlp
+    '''
     def __init__(self, length = 0.5):
         self.length = length
 
@@ -85,6 +104,10 @@ class SliceDuration:
 
 
 class DownloadTracker:
+    '''
+    Callable used by yt-dlp to get information on
+    download status
+    '''
     def __init__(self):
         self.files = []
 
@@ -94,6 +117,12 @@ class DownloadTracker:
 
 
 class YoutubeAudioDownloader(AudioDownloader):
+    '''
+    AudioDownloader backend implementation which uses
+    the yt-dlp to download audio samples
+    https://github.com/yt-dlp/yt-dlp
+    '''
+    
     def __init__(self, 
                  output_path,
                  target_sr = 44100):
@@ -119,6 +148,11 @@ class YoutubeAudioDownloader(AudioDownloader):
         }
     
     def get_snippets(self, query):
+        '''
+        :param query: string to use as the query when calling the API
+
+        :return paths of the downloaded files in a list
+        '''
         print(f"yt-dlp download starting for query: {query}")
 
         search_query = f'ytsearch1:"{query}"'

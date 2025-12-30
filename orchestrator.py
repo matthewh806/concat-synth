@@ -6,6 +6,17 @@ def collect_snippets_parallel(
         max_snippets = 32,
         max_workers = 4
 ):
+    '''
+    Parallelised task manager for downloading / retrieving audio. 
+    Uses a ThreadPoolExector to separate the download tasks into different threads
+    
+    :param backend: The source of the audio files to be downloaded (e.g. FreesoundAudioDownloader, YoutubeAudioDownloader)
+    :param queries: List of the query strings to download
+    :param max_snippets: The maximum number of downloads to perform
+    :param max_workers: The number of workers to parallelise this task with
+
+    :return List of paths to the audio files which have been downloaded
+    '''
     
     snippets = []
     completed = 0

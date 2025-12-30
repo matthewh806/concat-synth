@@ -15,8 +15,17 @@ current_directory = Path()
 download_directory = current_directory / "audio_downloads"
 
 def get_random_phrase(word_list, phrase_len = 2):
+    '''
+    Given a list of words will generate random phrases of a specified length
+    
+    :param word_list: List of words
+    :param phrase_len: Length of phrases to generate
+
+    :return phrase string
+    '''
     words = random.sample(word_list, phrase_len)
     return " ".join(words)
+
 
 def load_words(filename, limit=10):
     '''
@@ -41,7 +50,7 @@ def concatenate_snippets(snippets, output_sr = 44100, cross_fade = 50):
     from the snippets provided
     
     :param snippets: List of sample data as numpy arrays
-    :param output_sr: Sample rate to save the output as
+    :param output_sr: Sample rate to save the output as (Hz)
     :param cross_fade: Cross fade length (milliseconds)
 
     :return concatenated audio as a numpy array
@@ -63,6 +72,26 @@ def concatenate_snippets(snippets, output_sr = 44100, cross_fade = 50):
 
 
 def run_download_backend(backend_name, words_path, output_path, max_snippets = 64, max_snippet_length = 0.5, cross_fade = 50):
+    '''
+    Runs a download backend job. This name is a bit misleading as it downloads AND concatenates the audio
+
+    The backends differ in the quality of the audio samples downloaded & hence the concatenation
+    Freesound is a well structured, tagged and reliable backend. 
+    YouTube on the other hand is a bit of a wildwest and we just extract random snippets of audio. 
+    This actually makes YouTube much more interesting to work with as a sound source
+
+    In the case of youtube we actually generate phrases to use based on the list of words. Each query is
+    a random phrase created by combining n random words in the list. 
+    In the case of freesound the individual words are passed through. This is because the search is way more
+    strict in freesound & random phrases tend to yield zero results
+    
+    :param backend_name: The name of the backend to use for downloading audio (youtube, freesound)
+    :param words_path: Path to a list of words to use as search terms for downloads
+    :param output_path: Path to output the concatenated audio to
+    :param max_snippets: The maximum number of audio samples to download
+    :param max_snippet_length: The maximum length of each sample when concatenating (seconds)
+    :param cross_fade: Cross fade length between samples (milliseconds)
+    '''
     words = load_words(words_path)
 
     if backend_name == "youtube":
@@ -85,6 +114,17 @@ def run_download_backend(backend_name, words_path, output_path, max_snippets = 6
 
 
 def run_dir_backend(input_dir, output_path, max_snippet_length = 0.5, cross_fade = 50, extension=".mp3"):
+    '''
+    Runs a concatenation job on a directory. The directory provided and its subdirectories are recursively
+    searched and any files matching the provided extension (default mp3) will be conctatenated into a single
+    output file. 
+    
+    :param input_dir: The directory root to use as a basis to recursively load audio files from
+    :param output_path: Path to output the concatenated audio to
+    :param max_snippet_length: The maximum length of each sample when concatenating (seconds)
+    :param cross_fade: Cross fade length between samples (milliseconds)
+    :param extension: The file audio file extension type to search for
+    '''
     audio_dir = Path(input_dir)
     files = list(audio_dir.rglob(f"*{extension}"))
 
