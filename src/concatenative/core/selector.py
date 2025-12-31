@@ -9,6 +9,19 @@ def nearest_neighbour_search(
         snippets: List[AudioSnippet],
         target_snippet: AudioSnippet,
 ) -> AudioSnippet:
+    '''
+    Find the nearest neighbour snippet for a given target snippet
+
+    This loops over the feature map and calculates an distance value
+    between the target snippet and all other snippets.
+
+    The snippet with the minimum distance to the target is the
+    nearest neighbour
+    
+    :param snippets: List of AudioSnippets to check against
+    :param target_snippet: AudioSnippet to use as the target
+    :return: The nearnest neighbour AudioSnippet 
+    '''
     
     neighbour_costs = {}
 
