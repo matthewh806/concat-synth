@@ -70,6 +70,21 @@ def concatenate_snippets(snippets, output_sr = 44100, cross_fade = 50):
     return output
 
 
+def run_concatenator(file_paths, output_path, max_snippet_length = 0.5, cross_fade = 50):
+    '''
+    Loads the audio files, concatenates them and outputs the audio 
+    TODO: separate this out better and rename method
+    '''
+    if len(file_paths) == 0:
+        print(f"No audio files found!")
+        sys.exit(1)
+
+    print(f"Loading {len(file_paths)} files into the concatenator")
+    snippets = [snip for path in file_paths if (snip := audio_loader(path, max_clip_length=max_snippet_length)) is not None]
+    concatenated = concatenate_snippets(snippets, cross_fade=cross_fade)
+    sf.write(output_path, concatenated, 44100)
+
+
 def run_download_backend(backend_name, words_path, output_path, max_snippets = 64, max_snippet_length = 0.5, cross_fade = 50):
     '''
     Runs a download backend job. This name is a bit misleading as it downloads AND concatenates the audio
@@ -91,6 +106,9 @@ def run_download_backend(backend_name, words_path, output_path, max_snippets = 6
     :param max_snippet_length: The maximum length of each sample when concatenating (seconds)
     :param cross_fade: Cross fade length between samples (milliseconds)
     '''
+
+    print(f"Running download backend: {backend_name}, retrieving: {max_snippets} files")
+
     words = load_words(words_path)
 
     if backend_name == "youtube":
@@ -102,14 +120,7 @@ def run_download_backend(backend_name, words_path, output_path, max_snippets = 6
         backend = FreesoundAudioDownloader(download_directory, number_of_results=results_per_word)
 
     download_paths = collect_snippets_parallel(backend, queries, max_snippets)
-
-    if len(download_paths) == 0:
-        print(f"No audio files found in download directory!")
-        sys.exit(1)
-
-    snippets = [snip for path in download_paths if (snip := audio_loader(path, max_clip_length=max_snippet_length)) is not None]
-    concatenated = concatenate_snippets(snippets, cross_fade=cross_fade)
-    sf.write(output_path, concatenated, samplerate=44100, format="wav")
+    run_concatenator(download_paths, output_path=output_path, max_snippet_length=max_snippet_length, cross_fade=cross_fade)
 
 
 def run_dir_backend(input_dir, output_path, max_snippet_length = 0.5, cross_fade = 50, extension=".mp3"):
@@ -126,14 +137,7 @@ def run_dir_backend(input_dir, output_path, max_snippet_length = 0.5, cross_fade
     '''
     audio_dir = Path(input_dir)
     files = list(audio_dir.rglob(f"*{extension}"))
-
-    if len(files) == 0:
-        print(f"No audio files found in {input_dir}!")
-        sys.exit(1)
-
-    snippets = [snip for path in files if (snip := audio_loader(path, max_clip_length=max_snippet_length)) is not None]
-    concatenated = concatenate_snippets(snippets, cross_fade=cross_fade)
-    sf.write(output_path, concatenated, 44100)
+    run_concatenator(files, output_path=output_path, max_snippet_length=max_snippet_length, cross_fade=cross_fade)
 
 
 def main():
