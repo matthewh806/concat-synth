@@ -20,7 +20,7 @@ class FeatureConfig:
 def absolute_distance(feat_value_a, feat_value_b):
     return abs(feat_value_a - feat_value_b)
 
-
+#TODO: Not really sure this should be a constant (or kept here...)
 FEATURE_MAP = {
     'rms': FeatureConfig(
         name='rms',

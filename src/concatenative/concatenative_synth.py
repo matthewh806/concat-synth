@@ -43,47 +43,6 @@ def load_words(filename, limit=10):
     return words[:limit] if len(words) >= limit else words
 
 
-def normalise_features(snippets):
-    '''
-    Normalises features to be in the range [0,1]
-
-    TODO: MOVE
-    '''
-
-    feature_bounds = {
-        'rms': {'min': float('inf'), 'max': float('-inf')},
-        'pitch': {'min': float('inf'), 'max': float('-inf')},
-        'spectral_centroid': {'min': float('inf'), 'max': float('-inf')}
-    }
-
-    for snippet in snippets:
-        for feature_name, value in snippet.features.items():
-            print(f"{feature_name}: {value:.4f}")
-            if value < feature_bounds[feature_name]['min']:
-                feature_bounds[feature_name]['min'] = value
-            
-            if value > feature_bounds[feature_name]['max']:
-                feature_bounds[feature_name]['max'] = value
-    
-    print(feature_bounds)
-
-    for snippet in snippets:
-        snippet.normalised_features = {}
-        for feature_name, value in snippet.features.items():
-            feat_min = feature_bounds[feature_name]['min']
-            feat_max = feature_bounds[feature_name]['max']
-
-            if np.isnan(value):
-                snippet.normalised_features[feature_name] = value
-            else:
-                normalised_value = (value - feat_min) / (feat_max - feat_min) 
-                snippet.normalised_features[feature_name] = normalised_value
-
-            print(f"{feature_name}: {value:.4f}, normalised: {snippet.normalised_features[feature_name]:.4f}")
-        
-            
-
-
 def concatenate_snippets(snippets, output_sr = 44100, cross_fade = 50):
     '''
     Generates a single concatenated output file randomly

@@ -1,4 +1,3 @@
-import librosa
 import numpy as np
 from typing import List
 from .audio_snippet import AudioSnippet
@@ -6,6 +5,15 @@ from .features import FEATURE_MAP
 
 
 def analyse_snippet(snippet : AudioSnippet):
+    '''
+    Analyses an AudioSnippet and stores the 
+    result in the snippet.features dictionary
+
+    The features which are calculated are defined in
+    the FEATURE_MAP features.py
+    
+    :param snippet: AudioSnippet to analyse
+    '''
     samples = snippet.samples
     sample_rate = snippet.sample_rate
 
@@ -16,16 +24,18 @@ def analyse_snippet(snippet : AudioSnippet):
     snippet.features = features
 
 
-def calculate_normalised_features(snippets):
+def calculate_normalised_features(snippets : List[AudioSnippet]):
     '''
     Normalises features to be in the range [0,1]
+    The calculated normal features are stored in 
+    snippet.normalised_features
+
+    :param snippets: List of AudioSnippet whose features are going to be normalised
     '''
 
     feature_bounds = {}
     for feature_name in FEATURE_MAP.keys():
         feature_bounds[feature_name] = {'min': float('inf'), 'max': float('-inf')}
-
-    print(feature_bounds)
 
     for snippet in snippets:
         for feature_name, value in snippet.features.items():
@@ -53,12 +63,11 @@ def calculate_normalised_features(snippets):
 
 def analyse_snippets(snippets: List[AudioSnippet]):
     '''
-    Docstring for analyse_snippets
+    Performs a feature analysis and extraction on audio snippets
     
-    :param snippets: Description
-    :type snippets: List[AudioSnippet]
+    :param snippets: List of AudioSnippets to analyse
     '''
-    
+
     for snippet in snippets:
         analyse_snippet(snippet)
 
