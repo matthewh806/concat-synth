@@ -44,15 +44,13 @@ def audio_loader(path: Path, sample_rate = 44100, metadata = {}, max_clip_length
     if is_silent(samples):
         return None
     
-    features = {
-        'rms': np.mean(librosa.feature.rms(y = samples)),
-        'pitch': np.mean(librosa.pyin(y=samples, fmin=50, fmax=5000, sr=sample_rate)),
-        'spectral_centroid': np.mean(librosa.feature.spectral_centroid(y=samples, sr=sample_rate))
-    }
+    if len(metadata) == 0:
+        metadata = {
+            'filename': path.name
+        }
 
     return AudioSnippet(
         samples=samples,
         sample_rate=sr,
-        metadata=metadata,
-        features=features
+        metadata=metadata
     )
