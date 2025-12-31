@@ -3,6 +3,7 @@ from .audio_snippet import AudioSnippet
 from .features import FEATURE_MAP
 import math
 import numpy as np
+import random
 
 def nearest_neighbour_search(
         snippets: List[AudioSnippet],
@@ -32,3 +33,39 @@ def nearest_neighbour_search(
         print(f"Neighbour {snippet} -  Cost: {neighbour_costs[snippet]}")
 
     return min(neighbour_costs, key=neighbour_costs.get) if len(neighbour_costs) > 0 else None
+
+
+def generate_concatenation_path(snippets: List[AudioSnippet], output_length_sec: float = 10, output_sample_rate = 44100):
+    '''
+    Generates a path for the concatenator to use to create the audio collage / mosaic
+
+    Algorithm outline
+    1. From the list of snippets find a random snippet to start with
+    2. Loop over the snippets until the total output length >= output_length_sec
+        i. Each time around the loop finds the nearest neighbour to the target snippet
+        ii. Adds the detected nearest neighbour to the concatenation path
+        iii. Sets the detected nearest neighbour as the target for the next iteration of the loop
+    3. Returns the generated list of snippets
+    
+    :param snippets: List of AudioSnippets to use as a corpus for path construction
+    :param output_length_sec: Desired length of the output concatenated path
+    :param output_sample_rate: Sample rate out of the output file
+    '''
+
+    concatenation_path = []
+    target = snippets[random.randint(0, len(snippets)-1)]
+    concatenation_path.append(target)
+
+    output_length = len(target.samples) / output_sample_rate
+    while output_length <= output_length_sec:
+        target = nearest_neighbour_search(snippets=snippets, target_snippet=target)
+
+        if target is None:
+            # Just randomly pick a new one in this case
+            print("Warning: No new target found")
+            target = snippets[random.randint(0, len(snippets)-1)]
+
+        concatenation_path.append(target)
+        output_length += len(target.samples) / output_sample_rate
+
+    return concatenation_path
