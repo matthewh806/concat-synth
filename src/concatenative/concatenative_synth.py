@@ -5,8 +5,9 @@ import math
 import numpy as np
 import soundfile as sf
 from pathlib import Path
+from typing import List
 from .downloaders import FreesoundAudioDownloader, YoutubeAudioDownloader
-from .core import collect_snippets_parallel, audio_loader
+from .core import collect_snippets_parallel, audio_loader, analyse_snippets, generate_concatenation_path, AudioSnippet
 
 API_KEY = os.environ.get("FREESOUND_API_KEY")
 
@@ -43,7 +44,7 @@ def load_words(filename, limit=10):
     return words[:limit] if len(words) >= limit else words
 
 
-def concatenate_snippets(snippets, output_sr = 44100, cross_fade = 50):
+def concatenate_snippets(concatenation_path : List[AudioSnippet], output_sr = 44100, cross_fade = 50):
     '''
     Generates a single concatenated output file randomly
     from the snippets provided
@@ -54,11 +55,10 @@ def concatenate_snippets(snippets, output_sr = 44100, cross_fade = 50):
 
     :return concatenated audio as a numpy array
     '''
-    random.shuffle(snippets)
-    output = snippets[0].samples.copy()
+    output = concatenation_path[0].samples.copy()
     cross_fade_samples = int((cross_fade / 1000) * output_sr)
 
-    for snippet in snippets[1:]:
+    for snippet in concatenation_path[1:]:
         samples = snippet.samples
         cross_fade_amount = len(samples) if len(samples) < cross_fade_samples else cross_fade_samples
         fade_out = output[-cross_fade_amount:] * np.linspace(1, 0, cross_fade_amount)
@@ -81,8 +81,9 @@ def run_concatenator(file_paths, output_path, max_snippet_length = 0.5, cross_fa
 
     print(f"Loading {len(file_paths)} files into the concatenator")
     snippets = [snip for path in file_paths if (snip := audio_loader(path, max_clip_length=max_snippet_length)) is not None]
-    normalise_features(snippets)
-    concatenated = concatenate_snippets(snippets, cross_fade=cross_fade)
+    analyse_snippets(snippets)
+    concatenation_path = generate_concatenation_path(snippets=snippets)
+    concatenated = concatenate_snippets(concatenation_path, cross_fade=cross_fade)
     sf.write(output_path, concatenated, 44100)
 
 
