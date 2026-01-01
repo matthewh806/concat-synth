@@ -4,6 +4,8 @@ from .features import FEATURE_MAP
 import math
 import numpy as np
 import random
+from collections import deque
+
 
 def nearest_neighbour_search(
         snippets: List[AudioSnippet],
@@ -48,7 +50,7 @@ def nearest_neighbour_search(
     return min(neighbour_costs, key=neighbour_costs.get) if len(neighbour_costs) > 0 else None
 
 
-def generate_concatenation_path(snippets: List[AudioSnippet], output_length_sec: float = 10, output_sample_rate = 44100):
+def generate_concatenation_path(snippets: List[AudioSnippet], output_length_sec: float = 10, output_sample_rate = 44100, recent_history_size = 10):
     '''
     Generates a path for the concatenator to use to create the audio collage / mosaic
 
@@ -57,26 +59,42 @@ def generate_concatenation_path(snippets: List[AudioSnippet], output_length_sec:
     2. Loop over the snippets until the total output length >= output_length_sec
         i. Each time around the loop finds the nearest neighbour to the target snippet
         ii. Adds the detected nearest neighbour to the concatenation path
+        iv. Nearest neighbour is added to the recently_used_list to prevent immediate reuse 
         iii. Sets the detected nearest neighbour as the target for the next iteration of the loop
     3. Returns the generated list of snippets
     
     :param snippets: List of AudioSnippets to use as a corpus for path construction
     :param output_length_sec: Desired length of the output concatenated path
     :param output_sample_rate: Sample rate out of the output file
+    :param recent_history_size: Size of the recent snippets list to exclude from re-selection
     '''
 
     concatenation_path = []
     target = snippets[random.randint(0, len(snippets)-1)]
     concatenation_path.append(target)
 
+    recently_used_list = deque(maxlen= recent_history_size if recent_history_size < len(snippets) else len(snippets) // 2)
+    recently_used_list.append(target.id)
+
     output_length = len(target.samples) / output_sample_rate
     while output_length <= output_length_sec:
-        target = nearest_neighbour_search(snippets=snippets, target_snippet=target)
+        searchable_snippets_pool = [
+            s for s in snippets
+            if s.id not in recently_used_list
+        ]
+
+        if not searchable_snippets_pool:
+            print("No new snippets available to choose from. All remaining are in recently used list. Stopping early.")
+            break
+
+        target = nearest_neighbour_search(snippets=searchable_snippets_pool, target_snippet=target)
 
         if target is None:
             # Just randomly pick a new one in this case
             print("Warning: No new target found")
             target = snippets[random.randint(0, len(snippets)-1)]
+
+        recently_used_list.append(target.id)
 
         concatenation_path.append(target)
         output_length += len(target.samples) / output_sample_rate
