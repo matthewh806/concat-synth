@@ -18,3 +18,14 @@
 
 - **Inaccurate Output Duration:** The path generation logic now correctly accounts for the cross-fade duration, resulting in an output duration that more accurately matches the users target.
 - **Target Length Overshoot:** The final rendered audio is now precisely trimmed to the requested output length, preventing the generated file from being longer than specified.
+
+## [0.1.0] - 2025-12-30
+
+### Added
+- **Initial Project Setup:** Established the project as a standard Python package, including basic directory structure and dependency management.
+- **Basic Command-Line Interface (CLI):** Implemented a basic CLI allowing users to run synthesis from a local directory or online sources.
+- **Core Audio Processing:** Functionality to load audio segments from disk and concatenate them into a single output file.
+- **Multiple Audio Sources:** Support for sourcing audio snippets from local file directories, Freesound, and YouTube.
+- **Configurable Synthesis Parameters:** Users can adjust basic synthesis parameters such as maximum audio snippet length and crossfade duration.
+- **Parallel Audio Downloading:** Implemented concurrent downloading of audio snippets to improve data collection speed.
+- **Random Snippet Selection:** The initial synthesis approach involved randomly selecting and concatenating audio snippets.
