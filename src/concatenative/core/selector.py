@@ -50,7 +50,9 @@ def nearest_neighbour_search(
 
     neighbour = min(neighbour_costs, key=neighbour_costs.get) if len(neighbour_costs) > 0 else None
 
-    if neighbour:
+    if neighbour and neighbour == target_snippet:
+        logger.warning(f"Target {target_snippet} found itself as nearest neighbour!")
+    elif neighbour:
         logger.debug(f"Found neighbour for {target_snippet}: {neighbour} -  Cost: {neighbour_costs[neighbour]}")
 
     return neighbour
