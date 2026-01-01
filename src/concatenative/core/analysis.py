@@ -1,6 +1,8 @@
 import logging
 import numpy as np
 from typing import List
+
+from concatenative.core.utils import timed
 from .audio_snippet import AudioSnippet
 from .features import FEATURE_MAP
 
@@ -36,7 +38,7 @@ def analyse_snippet(snippet : AudioSnippet):
     snippet.features = features
     logger.debug(f"Analysis Results for {snippet}: {log_frame_stats(features=features)}")
 
-
+@timed
 def calculate_normalised_features(snippets : List[AudioSnippet]):
     '''
     Normalises features to be in the range [0,1]
@@ -72,7 +74,7 @@ def calculate_normalised_features(snippets : List[AudioSnippet]):
 
             logging.debug(f"{feature_name}: {value:.4f}, normalised: {snippet.normalised_features[feature_name]:.4f}")
 
-
+@timed
 def analyse_snippets(snippets: List[AudioSnippet]):
     '''
     Performs a feature analysis and extraction on audio snippets
@@ -80,7 +82,7 @@ def analyse_snippets(snippets: List[AudioSnippet]):
     :param snippets: List of AudioSnippets to analyse
     '''
 
-    logging.info(f"Starting analysis of {len(snippets)}")
+    logger.info(f"Starting analysis of {len(snippets)}")
 
     for snippet in snippets:
         analyse_snippet(snippet)

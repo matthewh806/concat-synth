@@ -1,4 +1,6 @@
 from typing import List
+
+from concatenative.core.utils import timed
 from .audio_snippet import AudioSnippet
 from .features import FEATURE_MAP
 import math
@@ -57,7 +59,7 @@ def nearest_neighbour_search(
 
     return neighbour
 
-
+@timed 
 def generate_concatenation_path(snippets: List[AudioSnippet], output_length_sec: float = 10, output_sample_rate = 44100, recent_history_size = 10, cross_fade=50):
     '''
     Generates a path for the concatenator to use to create the audio collage / mosaic
