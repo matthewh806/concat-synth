@@ -61,7 +61,9 @@ def main():
     dir_parser.add_argument("input_dir", type=str, help="Directory containing audio files")
 
     args = parser.parse_args()
-    setup_logger(log_level=args.loglevel)
+    
+    if args.command:
+        setup_logger(log_level=args.loglevel)
 
     if args.command == "download":
         run_download_backend(
