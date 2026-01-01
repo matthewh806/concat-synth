@@ -129,7 +129,7 @@ def run_download_backend(backend_name, words_path, output_path, output_length = 
         logger.error(f"Snippet length ({max_snippet_length} s) must be bigger than cross fade ({cross_fade} ms)")
         sys.exit(1)
 
-    words = load_words(words_path)
+    words = load_words(words_path, max_snippets)
 
     if backend_name == "youtube":
         backend = YoutubeAudioDownloader(download_directory)
