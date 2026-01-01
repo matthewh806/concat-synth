@@ -6,6 +6,16 @@ from .features import FEATURE_MAP
 
 logger = logging.getLogger(__name__)
 
+def log_frame_stats(features):
+    return {
+        k: (
+            f"{v.item():.3f}" 
+            if isinstance(v, np.generic) and not np.isnan(v) 
+            else  "nan" 
+        )
+        for k, v in features.items()
+    }
+
 def analyse_snippet(snippet : AudioSnippet):
     '''
     Analyses an AudioSnippet and stores the 
@@ -24,6 +34,7 @@ def analyse_snippet(snippet : AudioSnippet):
         features[feature_name] = feature_config.extractor(samples, sample_rate)
 
     snippet.features = features
+    logger.debug(f"Analysis Results for {snippet}: {log_frame_stats(features=features)}")
 
 
 def calculate_normalised_features(snippets : List[AudioSnippet]):
@@ -68,6 +79,8 @@ def analyse_snippets(snippets: List[AudioSnippet]):
     
     :param snippets: List of AudioSnippets to analyse
     '''
+
+    logging.info(f"Starting analysis of {len(snippets)}")
 
     for snippet in snippets:
         analyse_snippet(snippet)

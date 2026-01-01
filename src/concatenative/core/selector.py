@@ -110,7 +110,7 @@ def generate_concatenation_path(snippets: List[AudioSnippet], output_length_sec:
         concatenation_path.append(target)
         output_length += len(target.samples) / output_sample_rate - cross_fade / 1000
 
-        logger.debug(f"Running output length: {output_length}")
+#        logger.debug(f"Running output length: {output_length}")
 
     logger.info(f"Generated concatenation path of length: {len(concatenation_path)} snippets. "
                 f"Target length: {output_length_sec:.2f}s, "
