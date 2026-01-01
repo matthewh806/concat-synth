@@ -13,6 +13,10 @@ def main():
         help="Output WAV file path"
     )
     parent_parser.add_argument(
+        "--output-length", type=float, default=10.0,
+        help="Length of the concatenated output file"
+    )
+    parent_parser.add_argument(
         "--max-slice-length", type=float, default=0.5,
         help="Maximum length of each slice (seconds)"
     )
@@ -53,6 +57,7 @@ def main():
         run_download_backend(
             backend_name = args.backend,
             words_path = args.words,
+            output_length=args.output_length,
             output_path = args.out,
             max_snippets = args.max_snippets,
             max_snippet_length=args.max_slice_length,
@@ -62,6 +67,7 @@ def main():
         run_dir_backend(
             input_dir= args.input_dir,
             output_path= args.out,
+            output_length=args.output_length,
             max_snippet_length=args.max_slice_length,
             cross_fade=args.fade
         )

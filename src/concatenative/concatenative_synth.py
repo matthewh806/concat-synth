@@ -70,7 +70,7 @@ def concatenate_snippets(concatenation_path : List[AudioSnippet], output_sr = 44
     return output
 
 
-def run_concatenator(file_paths, output_path, max_snippet_length = 0.5, cross_fade = 50):
+def run_concatenator(file_paths, output_path, output_length = 10, max_snippet_length = 0.5, cross_fade = 50):
     '''
     Loads the audio files, concatenates them and outputs the audio 
     TODO: separate this out better and rename method
@@ -82,12 +82,12 @@ def run_concatenator(file_paths, output_path, max_snippet_length = 0.5, cross_fa
     print(f"Loading {len(file_paths)} files into the concatenator")
     snippets = [snip for path in file_paths if (snip := audio_loader(path, max_clip_length=max_snippet_length)) is not None]
     analyse_snippets(snippets)
-    concatenation_path = generate_concatenation_path(snippets=snippets)
+    concatenation_path = generate_concatenation_path(snippets=snippets, output_length_sec=output_length)
     concatenated = concatenate_snippets(concatenation_path, cross_fade=cross_fade)
     sf.write(output_path, concatenated, 44100)
 
 
-def run_download_backend(backend_name, words_path, output_path, max_snippets = 64, max_snippet_length = 0.5, cross_fade = 50):
+def run_download_backend(backend_name, words_path, output_path, output_length = 10, max_snippets = 64, max_snippet_length = 0.5, cross_fade = 50):
     '''
     Runs a download backend job. This name is a bit misleading as it downloads AND concatenates the audio
 
@@ -104,6 +104,7 @@ def run_download_backend(backend_name, words_path, output_path, max_snippets = 6
     :param backend_name: The name of the backend to use for downloading audio (youtube, freesound)
     :param words_path: Path to a list of words to use as search terms for downloads
     :param output_path: Path to output the concatenated audio to
+    :param output_length: Desired final output length in seconds
     :param max_snippets: The maximum number of audio samples to download
     :param max_snippet_length: The maximum length of each sample when concatenating (seconds)
     :param cross_fade: Cross fade length between samples (milliseconds)
@@ -122,10 +123,10 @@ def run_download_backend(backend_name, words_path, output_path, max_snippets = 6
         backend = FreesoundAudioDownloader(download_directory, number_of_results=results_per_word)
 
     download_paths = collect_snippets_parallel(backend, queries, max_snippets)
-    run_concatenator(download_paths, output_path=output_path, max_snippet_length=max_snippet_length, cross_fade=cross_fade)
+    run_concatenator(download_paths, output_path=output_path, output_length=output_length, max_snippet_length=max_snippet_length, cross_fade=cross_fade)
 
 
-def run_dir_backend(input_dir, output_path, max_snippet_length = 0.5, cross_fade = 50, extension=".mp3"):
+def run_dir_backend(input_dir, output_path, output_length = 10, max_snippet_length = 0.5, cross_fade = 50, extension=".mp3"):
     '''
     Runs a concatenation job on a directory. The directory provided and its subdirectories are recursively
     searched and any files matching the provided extension (default mp3) will be conctatenated into a single
@@ -133,13 +134,14 @@ def run_dir_backend(input_dir, output_path, max_snippet_length = 0.5, cross_fade
     
     :param input_dir: The directory root to use as a basis to recursively load audio files from
     :param output_path: Path to output the concatenated audio to
+    :param output_length: Desired final output length in seconds
     :param max_snippet_length: The maximum length of each sample when concatenating (seconds)
     :param cross_fade: Cross fade length between samples (milliseconds)
     :param extension: The file audio file extension type to search for
     '''
     audio_dir = Path(input_dir)
     files = list(audio_dir.rglob(f"*{extension}"))
-    run_concatenator(files, output_path=output_path, max_snippet_length=max_snippet_length, cross_fade=cross_fade)
+    run_concatenator(files, output_path=output_path, output_length=output_length, max_snippet_length=max_snippet_length, cross_fade=cross_fade)
 
 
 def main():
