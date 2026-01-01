@@ -1,4 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
+import logging
+
+logger = logging.getLogger(__name__)
 
 def collect_snippets_parallel(
         backend,
@@ -33,10 +36,10 @@ def collect_snippets_parallel(
             try:
                 result = future.result()
             except Exception as e:
-                print(f"Download ({completed} / {max_snippets}) failed for {query}: {e}")
+                logger.error(f"Download ({completed} / {max_snippets}) failed for {query}: {e}")
                 continue
 
-            print(f"Download ({completed} / {max_snippets}) completed for {query}")
+            logger.info(f"Download ({completed} / {max_snippets}) completed for {query}")
             for snippet in result:
                 snippets.append(snippet)
                 if len(snippets) >= max_snippets:

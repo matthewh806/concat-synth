@@ -1,8 +1,10 @@
+import logging
 import numpy as np
 from typing import List
 from .audio_snippet import AudioSnippet
 from .features import FEATURE_MAP
 
+logger = logging.getLogger(__name__)
 
 def analyse_snippet(snippet : AudioSnippet):
     '''
@@ -39,7 +41,6 @@ def calculate_normalised_features(snippets : List[AudioSnippet]):
 
     for snippet in snippets:
         for feature_name, value in snippet.features.items():
-            print(f"{feature_name}: {value:.4f}")
             if value < feature_bounds[feature_name]['min']:
                 feature_bounds[feature_name]['min'] = value
             
@@ -58,7 +59,7 @@ def calculate_normalised_features(snippets : List[AudioSnippet]):
                 normalised_value = (value - feat_min) / (feat_max - feat_min) 
                 snippet.normalised_features[feature_name] = normalised_value
 
-            print(f"{feature_name}: {value:.4f}, normalised: {snippet.normalised_features[feature_name]:.4f}")
+            logging.debug(f"{feature_name}: {value:.4f}, normalised: {snippet.normalised_features[feature_name]:.4f}")
 
 
 def analyse_snippets(snippets: List[AudioSnippet]):

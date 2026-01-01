@@ -4,10 +4,13 @@ import sys
 import math
 import numpy as np
 import soundfile as sf
+import logging
 from pathlib import Path
 from typing import List
 from .downloaders import FreesoundAudioDownloader, YoutubeAudioDownloader
 from .core import collect_snippets_parallel, audio_loader, analyse_snippets, generate_concatenation_path, AudioSnippet
+
+logger = logging.getLogger(__name__)
 
 API_KEY = os.environ.get("FREESOUND_API_KEY")
 
@@ -67,15 +70,15 @@ def concatenate_snippets(concatenation_path : List[AudioSnippet], output_sr = 44
         overlapping_region = fade_out + fade_in
         output = np.concatenate([output[:-cross_fade_amount], overlapping_region, samples[cross_fade_amount:]])
 
-    print(f"Generated a concatenated file of length {(len(output) / output_sr):.2f} seconds from {len(concatenation_path)} samples")
+    logger.info(f"Generated a concatenated file of length {(len(output) / output_sr):.2f} seconds from {len(concatenation_path)} samples")
     concatenation_path_length = len(output)
     target_length = int(output_length * output_sr)
 
     if concatenation_path_length > output_length:
         output = output[:target_length]
-        print(f"Trimmed final output to {output_length:.2f} seconds")
+        logger.info(f"Trimmed final output to {output_length:.2f} seconds")
     elif concatenation_path_length < target_length:
-        print(f"Warning: Final output length {(len(output) / output_sr):.2f}s is shorter than target {output_length:.2f}s")
+        logger.warning(f"Final output length {(len(output) / output_sr):.2f}s is shorter than target {output_length:.2f}s")
 
     return output
 
@@ -86,10 +89,10 @@ def run_concatenator(file_paths, output_path, output_length = 10, max_snippet_le
     TODO: separate this out better and rename method
     '''
     if len(file_paths) == 0:
-        print(f"No audio files found!")
+        logger.warning(f"No audio files found!")
         sys.exit(1)
 
-    print(f"Loading {len(file_paths)} files into the concatenator")
+    logger.info(f"Loading {len(file_paths)} files into the concatenator")
     snippets = [snip for path in file_paths if (snip := audio_loader(path, max_clip_length=max_snippet_length)) is not None]
     analyse_snippets(snippets)
     concatenation_path = generate_concatenation_path(snippets=snippets, output_length_sec=output_length, cross_fade=cross_fade)
@@ -120,10 +123,10 @@ def run_download_backend(backend_name, words_path, output_path, output_length = 
     :param cross_fade: Cross fade length between samples (milliseconds)
     '''
 
-    print(f"Running download backend: {backend_name}, retrieving: {max_snippets} files")
+    logger.info(f"Running download backend: {backend_name}, retrieving: {max_snippets} files")
 
     if max_snippet_length * 1000 <= cross_fade:
-        print(f"Snippet length ({max_snippet_length} s) must be bigger than cross fade ({cross_fade} ms)")
+        logger.error(f"Snippet length ({max_snippet_length} s) must be bigger than cross fade ({cross_fade} ms)")
         sys.exit(1)
 
     words = load_words(words_path)
@@ -155,7 +158,7 @@ def run_dir_backend(input_dir, output_path, output_length = 10, max_snippet_leng
     '''
 
     if max_snippet_length * 1000 <= cross_fade:
-        print(f"Snippet length ({max_snippet_length} s) must be bigger than cross fade ({cross_fade} ms)")
+        logger.error(f"Snippet length ({max_snippet_length} s) must be bigger than cross fade ({cross_fade} ms)")
         sys.exit(1)
 
     audio_dir = Path(input_dir)

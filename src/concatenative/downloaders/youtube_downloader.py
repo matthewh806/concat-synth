@@ -3,7 +3,9 @@ from pathlib import Path
 import random
 import uuid
 from yt_dlp import YoutubeDL
+import logging
 
+logger = logging.getLogger(__name__)
 
 class SliceDuration:
     '''
@@ -79,7 +81,7 @@ class YoutubeAudioDownloader(AudioDownloader):
 
         :return paths of the downloaded files in a list
         '''
-        print(f"yt-dlp download starting for query: {query}")
+        logging.info(f"yt-dlp download starting for query: {query}")
 
         search_query = f'ytsearch1:"{query}"'
         tracker = DownloadTracker()
@@ -94,7 +96,7 @@ class YoutubeAudioDownloader(AudioDownloader):
             try:
                 ydl.download([search_query])
             except Exception as e:
-                print(f"yt-dlp failed for query '{query}': {e}")
+                logging.error(f"yt-dlp failed for query '{query}': {e}")
                 return []
 
         paths = []

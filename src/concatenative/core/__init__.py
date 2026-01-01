@@ -1,3 +1,4 @@
+from .logger import setup_logger
 from .audio_snippet import AudioSnippet
 from .audio_loader import audio_loader
 from .orchestrator import collect_snippets_parallel

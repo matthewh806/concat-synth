@@ -5,7 +5,9 @@ import math
 import numpy as np
 import random
 from collections import deque
+import logging
 
+logger = logging.getLogger(__name__)
 
 def nearest_neighbour_search(
         snippets: List[AudioSnippet],
@@ -45,9 +47,13 @@ def nearest_neighbour_search(
                 distance += feature_dist * feature_dist
                 
         neighbour_costs[snippet] = math.sqrt(distance)
-        print(f"Neighbour {snippet} -  Cost: {neighbour_costs[snippet]}")
 
-    return min(neighbour_costs, key=neighbour_costs.get) if len(neighbour_costs) > 0 else None
+    neighbour = min(neighbour_costs, key=neighbour_costs.get) if len(neighbour_costs) > 0 else None
+
+    if neighbour:
+        logger.debug(f"Found neighbour for {target_snippet}: {neighbour} -  Cost: {neighbour_costs[neighbour]}")
+
+    return neighbour
 
 
 def generate_concatenation_path(snippets: List[AudioSnippet], output_length_sec: float = 10, output_sample_rate = 44100, recent_history_size = 10, cross_fade=50):
@@ -89,14 +95,14 @@ def generate_concatenation_path(snippets: List[AudioSnippet], output_length_sec:
         ]
 
         if not searchable_snippets_pool:
-            print("No new snippets available to choose from. All remaining are in recently used list. Stopping early.")
+            logging.warning("No new snippets available to choose from. All remaining are in recently used list. Stopping early.")
             break
 
         target = nearest_neighbour_search(snippets=searchable_snippets_pool, target_snippet=target)
 
         if target is None:
             # Just randomly pick a new one in this case
-            print("Warning: No new target found")
+            logger.warning("No new target found")
             target = snippets[random.randint(0, len(snippets)-1)]
 
         recently_used_list.append(target.id)
@@ -104,9 +110,9 @@ def generate_concatenation_path(snippets: List[AudioSnippet], output_length_sec:
         concatenation_path.append(target)
         output_length += len(target.samples) / output_sample_rate - cross_fade / 1000
 
-        print(f"Current output length: {output_length}")
+        logger.debug(f"Running output length: {output_length}")
 
-    print(f"Generated concatenation path of length: {len(concatenation_path)} snippets. "
-          f"Target length: {output_length_sec:.2f}s, "
-          f"Estimated actual output {output_length:.2f}s")
+    logger.info(f"Generated concatenation path of length: {len(concatenation_path)} snippets. "
+                f"Target length: {output_length_sec:.2f}s, "
+                f"Estimated actual output {output_length:.2f}s")
     return concatenation_path

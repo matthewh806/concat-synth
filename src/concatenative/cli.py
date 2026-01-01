@@ -1,5 +1,7 @@
 import argparse
+import logging
 from .concatenative_synth import run_download_backend, run_dir_backend
+from .core.logger import setup_logger
 
 '''
 This is a script which defines the CLI for the concatenative synthesis system.
@@ -23,6 +25,12 @@ def main():
     parent_parser.add_argument(
         "--fade", type=int, default=50,
         help="Cross fade length (milliseconds)"
+    )
+    parent_parser.add_argument(
+        "-v", '--verbose',
+        help="Enable verbose logging (DEBUG level).",
+        action="store_const", dest="loglevel", const=logging.DEBUG,
+        default=logging.INFO
     )
 
     parser = argparse.ArgumentParser("Concatenative Audio Synthesis")
@@ -53,6 +61,8 @@ def main():
     dir_parser.add_argument("input_dir", type=str, help="Directory containing audio files")
 
     args = parser.parse_args()
+    setup_logger(log_level=args.loglevel)
+
     if args.command == "download":
         run_download_backend(
             backend_name = args.backend,
