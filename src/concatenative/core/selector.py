@@ -50,7 +50,7 @@ def nearest_neighbour_search(
     return min(neighbour_costs, key=neighbour_costs.get) if len(neighbour_costs) > 0 else None
 
 
-def generate_concatenation_path(snippets: List[AudioSnippet], output_length_sec: float = 10, output_sample_rate = 44100, recent_history_size = 10):
+def generate_concatenation_path(snippets: List[AudioSnippet], output_length_sec: float = 10, output_sample_rate = 44100, recent_history_size = 10, cross_fade=50):
     '''
     Generates a path for the concatenator to use to create the audio collage / mosaic
 
@@ -62,6 +62,10 @@ def generate_concatenation_path(snippets: List[AudioSnippet], output_length_sec:
         iv. Nearest neighbour is added to the recently_used_list to prevent immediate reuse 
         iii. Sets the detected nearest neighbour as the target for the next iteration of the loop
     3. Returns the generated list of snippets
+
+    Note that this function uses the whole length of each snippet and so it can overshoot 
+    the target `output_length_sec` param, returning a longer path. This can be trimemd 
+    by the caller if necessary
     
     :param snippets: List of AudioSnippets to use as a corpus for path construction
     :param output_length_sec: Desired length of the output concatenated path
@@ -77,7 +81,8 @@ def generate_concatenation_path(snippets: List[AudioSnippet], output_length_sec:
     recently_used_list.append(target.id)
 
     output_length = len(target.samples) / output_sample_rate
-    while output_length <= output_length_sec:
+
+    while output_length < output_length_sec:
         searchable_snippets_pool = [
             s for s in snippets
             if s.id not in recently_used_list
@@ -97,6 +102,11 @@ def generate_concatenation_path(snippets: List[AudioSnippet], output_length_sec:
         recently_used_list.append(target.id)
 
         concatenation_path.append(target)
-        output_length += len(target.samples) / output_sample_rate
+        output_length += len(target.samples) / output_sample_rate - cross_fade / 1000
 
+        print(f"Current output length: {output_length}")
+
+    print(f"Generated concatenation path of length: {len(concatenation_path)} snippets. "
+          f"Target length: {output_length_sec:.2f}s, "
+          f"Estimated actual output {output_length:.2f}s")
     return concatenation_path
