@@ -1,9 +1,8 @@
-from concatenative.core import analyse_snippets, nearest_neighbour_search
 from concatenative.core import audio_loader
+from concatenative.core.corpus import Corpus
 from concatenative.core.logger import setup_logger
 from pathlib import Path
 import sys
-import random
 import logging
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -25,14 +24,14 @@ if __name__ == "__main__":
         sys.exit(1)
 
     snippets = [snip for path in file_paths if (snip := audio_loader(path, max_clip_length=0.2)) is not None]
-    target = snippets[random.randint(0, len(snippets)-1)]
-    analyse_snippets(snippets)
+    corpus = Corpus(snippets)
+    target = corpus.get_random_snippet()
 
     logging.info(f"Finding nearest neighbour for target: {target}")
     
-    nearest_neighbour = nearest_neighbour_search(
-        snippets=snippets,
-        target_snippet=target
+    nearest_neighbour = corpus.nearest_neighbour_search(
+        target_snippet=target,
+        exclusion_list=[]
     )
 
     if nearest_neighbour:
