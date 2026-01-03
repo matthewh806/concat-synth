@@ -33,7 +33,9 @@ def analyse_snippet(snippet : AudioSnippet):
 
     features = {}
     for feature_name, feature_config in FEATURE_MAP.items():
-        features[feature_name] = feature_config.extractor(samples, sample_rate)
+        feature_value = feature_config.extractor(samples, sample_rate)
+        # This is to prevent issues with NaN post extraction (e.g. in the kd tree construction)
+        features[feature_name] = feature_value if not np.isnan(feature_value) else 0.0
 
     snippet.features = features
     logger.debug(f"Analysis Results for {snippet}: {log_frame_stats(features=features)}")
