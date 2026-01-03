@@ -1,5 +1,5 @@
 from .audio_snippet import AudioSnippet
-from typing import List
+from typing import List, Dict, Optional
 from .analysis import analyse_snippets
 from .features import FEATURE_MAP
 from collections import deque
@@ -7,13 +7,26 @@ import math
 import logging
 import numpy as np
 import random
+from scipy.spatial import KDTree
 
 logger = logging.getLogger(__name__)
 
 class Corpus:
     def __init__(self, snippets: List[AudioSnippet]):
+
+        if not snippets:
+            ValueError("Cannot initialise an empty corpus.")
+
         self.snippets = snippets
+
+        # The stored feature search space tree
+        self.search_tree: Optional[KDTree] = None
+
+        # A mapping from the internal KDTree index back to the snippet object
+        self.index_to_snippet_map : Dict[int, AudioSnippet] = {}
+
         analyse_snippets(snippets)
+        self.build_feature_space()
         
     def get_random_snippet(self):
         '''
@@ -42,12 +55,57 @@ class Corpus:
         :return: The size of the corpus
         '''
         return len(self.snippets)
+    
+
+    def _get_snippet_feature_vector(self, snippet : AudioSnippet):
+        '''
+        Getst the k dimensional feature vector for an AudioSnippet
+        This will look through the feature map and for each feature
+        add a dimension to the vector
+        
+        :param snippet: The snippet to generate the vector for
+        '''
+        
+        feature_vector = []
+
+        for feature_name, _ in FEATURE_MAP.items():
+            if feature_name in snippet.normalised_features:
+                value = snippet.normalised_features[feature_name]
+
+                if value is None:
+                    logger.warning(f"Snippet {snippet.id} is missing the feature '{feature_name}' and will be excluded from the feature space")
+                    return None
+                
+                feature_vector.append(value)
+
+        return np.array(feature_vector)
+    
+    
+    def build_feature_space(self):
+        '''
+        Builds a k dimensional feature space tree, this is stored for quickly 
+        finding nearest neighbours.
+
+        The KDTree implementation used here is from scipy.signal which simply uses
+        a euclidean distance measure.
+        '''
+
+        feature_vectors = []
+        for snippet in self.snippets:
+            vector = self._get_snippet_feature_vector(snippet)
+            if vector is not None:
+                map_index = len(feature_vectors)
+                self.index_to_snippet_map[map_index] = snippet
+                feature_vectors.append(vector)
+
+        self.search_tree = KDTree(np.array(feature_vectors))
 
     
     def nearest_neighbour_search(
             self,
             target_snippet: AudioSnippet,
-            exclusion_list: deque[AudioSnippet]
+            exclusion_list: deque[AudioSnippet],
+            num_candidates: int = 10
     ) -> AudioSnippet:
         '''
         Find the nearest neighbour snippet for a given target snippet from the corpus
@@ -66,42 +124,27 @@ class Corpus:
         :param a queue containing samples to skip from the nn calculation
         :return: The nearnest neighbour AudioSnippet 
         '''
-        
-        neighbour_costs = {}
 
-        searchable_snippets_pool = [
-            s for s in self.snippets
-            if s.id not in exclusion_list
-        ]
+        target_feature_vector = self._get_snippet_feature_vector(target_snippet)
+        #num_neighbours = num_candidates if num_candidates
 
-        if not searchable_snippets_pool:
-            logging.warning("No new snippets available to choose from. All remaining are in recently used list. Stopping early.")
+        try:
+            distances, indices = self.search_tree.query(target_feature_vector, k = num_candidates)
+        except Exception as e:
+            logger.error(f"KDTree query failed: {e}")
             return None
 
-        for snippet in self.snippets:
-            if snippet == target_snippet:
-                continue
+        for index in indices:
+            candidate_snippet = self.index_to_snippet_map[index]
+
+            if candidate_snippet != target_snippet and candidate_snippet not in exclusion_list:
+                logger.debug(f"Found neighbour for {target_snippet}: {candidate_snippet} -  Distance: {distances[index]}")
+                return candidate_snippet
             
-            distance = 0.0
-            for feature_name, feature_config in FEATURE_MAP.items():
-                if feature_name in snippet.normalised_features and feature_name in target_snippet.normalised_features:
-                    snippet_feature_value = snippet.normalised_features[feature_name]
-                    target_feature_value = target_snippet.normalised_features[feature_name]
+        # Fallback in case we didn't find a neighbour
+        if indices.size > 0:
+            candidate_snippet = self.index_to_snippet_map[0]
+            logger.debug(f"All nearest neighbours recently used, fallback for {target_snippet}: {candidate_snippet} -  Distance: {distances[index]}")
 
-                    # Dont include nan values in distance calculation
-                    if np.isnan(snippet_feature_value) or np.isnan(target_feature_value):
-                        continue
-
-                    feature_dist = feature_config.distance_fn(snippet_feature_value, target_feature_value)
-                    distance += feature_dist * feature_dist
-                    
-            neighbour_costs[snippet] = math.sqrt(distance)
-
-        neighbour = min(neighbour_costs, key=neighbour_costs.get) if len(neighbour_costs) > 0 else None
-
-        if neighbour and neighbour == target_snippet:
-            logger.warning(f"Target {target_snippet} found itself as nearest neighbour!")
-        elif neighbour:
-            logger.debug(f"Found neighbour for {target_snippet}: {neighbour} -  Cost: {neighbour_costs[neighbour]}")
-
-        return neighbour
+        logger.error(f"No suitable neighbours found for {target_snippet}.")
+        return None
