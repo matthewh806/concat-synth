@@ -71,7 +71,8 @@ def calculate_normalised_features(snippets : List[AudioSnippet]):
             if np.isnan(value):
                 snippet.normalised_features[feature_name] = value
             else:
-                normalised_value = (value - feat_min) / (feat_max - feat_min) 
+                denominator = (feat_max - feat_min) 
+                normalised_value = (value - feat_min) / denominator if denominator > 0 else 0
                 snippet.normalised_features[feature_name] = normalised_value
 
             logging.debug(f"{feature_name}: {value:.4f}, normalised: {snippet.normalised_features[feature_name]:.4f}")
@@ -84,7 +85,7 @@ def analyse_snippets(snippets: List[AudioSnippet]):
     :param snippets: List of AudioSnippets to analyse
     '''
 
-    logger.info(f"Starting analysis of {len(snippets)}")
+    logger.info(f"Starting analysis of {len(snippets)} snippets")
 
     for snippet in snippets:
         analyse_snippet(snippet)
