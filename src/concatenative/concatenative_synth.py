@@ -8,7 +8,7 @@ import logging
 from pathlib import Path
 from typing import List
 from .downloaders import FreesoundAudioDownloader, YoutubeAudioDownloader
-from .core import collect_snippets_parallel, audio_loader, analyse_snippets, generate_concatenation_path, AudioSnippet
+from .core import collect_snippets_parallel, audio_loader, analyse_snippets, generate_concatenation_path, AudioSnippet, Corpus
 
 logger = logging.getLogger(__name__)
 
@@ -94,8 +94,8 @@ def run_concatenator(file_paths, output_path, output_length = 10, max_snippet_le
 
     logger.info(f"Loading {len(file_paths)} files into the concatenator")
     snippets = [snip for path in file_paths if (snip := audio_loader(path, max_clip_length=max_snippet_length)) is not None]
-    analyse_snippets(snippets)
-    concatenation_path = generate_concatenation_path(snippets=snippets, output_length_sec=output_length, cross_fade=cross_fade)
+    corpus = Corpus(snippets=snippets)
+    concatenation_path = generate_concatenation_path(corpus=corpus, output_length_sec=output_length, cross_fade=cross_fade)
     concatenated = concatenate_snippets(concatenation_path, output_length=output_length, cross_fade=cross_fade)
     sf.write(output_path, concatenated, 44100)
 
