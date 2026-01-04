@@ -1,8 +1,9 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from typing import List, Optional, Callable
+from typing import List, Optional, Callable, Dict
 from concatenative.core import AudioSnippet
 from concatenative.core.features import FEATURE_MAP
+from uuid import UUID
 import logging
 
 logger = logging.getLogger(__name__)
@@ -27,7 +28,8 @@ class InteractiveCorpusPlot:
             y_axis_feature: str,
             colour_feature: str,
             title: str = "Corpus Normalised Feature Map",
-            on_click_callback: Optional[Callable[[AudioSnippet], None]] = None
+            on_click_callback: Optional[Callable[[AudioSnippet], None]] = None,
+            path_to_draw: Optional[List[AudioSnippet]] = None
     ):
         self.snippets = snippets
 
@@ -46,6 +48,9 @@ class InteractiveCorpusPlot:
         self.colour_data = np.array(plot_data[colour_feature])
         self.title = title
         self.on_click_callback = on_click_callback
+        self.path_to_draw = path_to_draw
+
+        self.snippet_id_to_index : Dict[UUID, int] = {snippet.id: index for index, snippet in enumerate(self.snippets)}
 
         self.fig, self.ax = plt.subplots(figsize=(12,10))
         self.scatter = self.ax.scatter(
@@ -69,11 +74,15 @@ class InteractiveCorpusPlot:
             "", xy=(0,0), xytext=(15,15), textcoords='offset points'
         )
 
+        self.annot.set_visible(False)
+
         # -- Step 6: Connect event handlers
         self.fig.canvas.mpl_connect("motion_notify_event", self.hover)
         self.fig.canvas.mpl_connect("button_press_event", self.on_press)
 
-        self.annot.set_visible(False)
+        # -- Step 7: Draw the audio path (if provided)
+        if self.on_click_callback:
+            self.draw_path()
 
 
     def update_annot(self, index):
@@ -131,3 +140,37 @@ class InteractiveCorpusPlot:
 
                 if self.on_click_callback:
                     self.on_click_callback(snippet)
+
+    def draw_path(self):
+        if not self.path_to_draw:
+            logger.warning("Can't draw None path object")
+            return
+        
+        if len(self.path_to_draw) < 2:
+            logger.warning(f"Not enough points ({len(self.path_to_draw)}) in the path to plot")
+            return
+
+        # Get the indicies of the paths we're plotting
+        path_indices = [self.snippet_id_to_index[snippet.id] for snippet in self.path_to_draw]
+
+        # Just in case the snippet from the path to draw wasn't in the map (i.e. not in the plotted data)
+        valid_indices = [i for i in path_indices if i is not None]
+
+        # Get the x and y values of each of the points
+        path_x = self.x_data[valid_indices]
+        path_y = self.y_data[valid_indices]
+
+        self.ax.plot(
+            path_x, path_y, 
+            color='red', linestyle='-', linewidth=1.5, 
+            alpha=0.8, label='Concatenation Path')
+        
+        self.ax.plot(path_x[0], path_y[0],
+                     marker='o', color='lime', markersize=10,
+                     alpha=0.9, label='start')
+        
+        self.ax.plot(path_x[-1], path_y[-1],
+                marker='X', color='red', markersize=10,
+                alpha=0.9, label='end')
+
+        self.ax.legend()
