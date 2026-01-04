@@ -33,17 +33,20 @@ def play_snippet_audio_callback(snippet):
 if __name__ == "__main__":
 
     setup_logger(log_level=logging.DEBUG)
+    logger = logging.getLogger(__name__)
 
     audio_dir = Path(ROOT / "audio_downloads")
     file_paths = list(audio_dir.rglob(f"*{'.mp3'}"))
 
     if len(file_paths) == 0:
-        logging.error(f"No audio files found!")
+        logger.error(f"No audio files found!")
         sys.exit(1)
 
     snippets = [snip for path in file_paths if (snip := audio_loader(path, max_clip_length=0.2)) is not None]
     corpus = Corpus(snippets)
     concatenation_path = generate_concatenation_path(corpus=corpus, output_length_sec=5)
+
+    print(concatenation_path.get_stats())    
 
     plot = InteractiveCorpusPlot(corpus.snippets, 'rms', 'spectral_centroid', 'pitch', on_click_callback=play_snippet_audio_callback, path_to_draw=concatenation_path)
     plt.show()
