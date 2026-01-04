@@ -1,4 +1,5 @@
 from typing import List
+from collections import Counter
 from .audio_snippet import AudioSnippet
 import numpy as np
 import logging
@@ -6,6 +7,12 @@ import logging
 logger = logging.getLogger(__name__)
 
 class ConcatenationPath:
+    '''
+    Class which stores a generated snippets path
+
+    The snippets path a list of snippets which make up
+    a sequence to stitch together when rendering the audio
+    '''
 
     def __init__(
             self,
@@ -53,7 +60,32 @@ class ConcatenationPath:
 
         return output
     
+    def get_stats(self):
+        '''
+        Retrieves some basic stats about the generated path as a string
+        (Path length, number of snippets visited once, most visited)
 
+        :return statistics string
+        '''
+        path_snippet_ids = [s.id for s in self.snippets_path]
+        visit_counts = Counter(path_snippet_ids)
+
+        num_visited_once = sum(1 for count in visit_counts.values() if count == 1)
+        most_visited = visit_counts.most_common(5)
+
+        stats = [
+            "--- Path Generation Stats ---",
+            f"Path Length: {len(self)}",
+            f"Snippets Visited Once: {num_visited_once}",
+            f"Most Visited:"
+        ]
+        
+        for item in most_visited:
+            stats.append(f"     - ID: {str(item[0])} (Count: {item[1]})")
+
+        return "\n".join(stats)
+    
+    
     def __len__(self) -> int:
         return len(self.snippets_path)
     
