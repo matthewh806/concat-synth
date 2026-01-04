@@ -39,8 +39,6 @@ def plot_feature_map(
     if not all(plot_data.values()):
         logger.warning("Could not generate plot. Not enough valid data for the selected features")
         return
-    
-    print(plot_data)
 
     # --- Step 2: Convert feature lists to numpy arrays ---
     x_data = np.array(plot_data[x_axis_feature])
