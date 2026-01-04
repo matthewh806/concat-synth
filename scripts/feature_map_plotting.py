@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import sounddevice as sd
 from concatenative.core import audio_loader, AudioSnippet
 from concatenative.core.corpus import Corpus
+from concatenative.core.selector import generate_concatenation_path
 from concatenative.utils.plotting import InteractiveCorpusPlot
 from concatenative.core.logger import setup_logger
 import logging
@@ -42,6 +43,7 @@ if __name__ == "__main__":
 
     snippets = [snip for path in file_paths if (snip := audio_loader(path, max_clip_length=0.2)) is not None]
     corpus = Corpus(snippets)
+    concatenation_path = generate_concatenation_path(corpus=corpus, output_length_sec=5)
 
-    plot = InteractiveCorpusPlot(corpus.snippets, 'rms', 'spectral_centroid', 'pitch', on_click_callback=play_snippet_audio_callback)
+    plot = InteractiveCorpusPlot(corpus.snippets, 'rms', 'spectral_centroid', 'pitch', on_click_callback=play_snippet_audio_callback, path_to_draw=concatenation_path)
     plt.show()
