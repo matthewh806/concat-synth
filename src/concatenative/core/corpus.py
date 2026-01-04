@@ -137,7 +137,7 @@ class Corpus:
         for index, distance in zip(indices, distances):
             candidate_snippet = self.index_to_snippet_map[index]
 
-            if candidate_snippet != target_snippet and candidate_snippet not in exclusion_list:
+            if candidate_snippet != target_snippet and candidate_snippet.id not in exclusion_list:
                 logger.debug(f"Found neighbour for {target_snippet}: {candidate_snippet} -  Distance: {distance}")
                 return candidate_snippet
             
