@@ -1,13 +1,17 @@
 from pathlib import Path
+import matplotlib.pyplot as plt
 from concatenative.core import audio_loader
 from concatenative.core.corpus import Corpus
-from concatenative.utils.plotting import plot_feature_map
+from concatenative.utils.plotting import InteractiveCorpusPlot
+from concatenative.core.logger import setup_logger
 import logging
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 
 if __name__ == "__main__":
+
+    setup_logger(log_level=logging.DEBUG)
 
     audio_dir = Path(ROOT / "audio_downloads")
     file_paths = list(audio_dir.rglob(f"*{'.mp3'}"))
@@ -19,4 +23,5 @@ if __name__ == "__main__":
     snippets = [snip for path in file_paths if (snip := audio_loader(path, max_clip_length=0.2)) is not None]
     corpus = Corpus(snippets)
 
-    plot_feature_map(corpus.snippets, 'rms', 'spectral_centroid', 'pitch')
+    plot = InteractiveCorpusPlot(corpus.snippets, 'rms', 'spectral_centroid', 'pitch')
+    plt.show()

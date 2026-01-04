@@ -1,5 +1,5 @@
-from .plotting import plot_feature_map
+from .plotting import InteractiveCorpusPlot
 
 __all__ = [
-    "plot_feature_map"
+    "InteractiveCorpusPlot"
 ]
