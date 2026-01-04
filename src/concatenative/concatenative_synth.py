@@ -6,9 +6,8 @@ import numpy as np
 import soundfile as sf
 import logging
 from pathlib import Path
-from typing import List
 from .downloaders import FreesoundAudioDownloader, YoutubeAudioDownloader
-from .core import collect_snippets_parallel, audio_loader, generate_concatenation_path, Corpus, concatenate_snippets
+from .core import collect_snippets_parallel, audio_loader, generate_concatenation_path, Corpus, ConcatenationPath
 
 logger = logging.getLogger(__name__)
 
@@ -60,8 +59,8 @@ def run_concatenator(file_paths, output_path, output_length = 10, max_snippet_le
     snippets = [snip for path in file_paths if (snip := audio_loader(path, max_clip_length=max_snippet_length)) is not None]
     corpus = Corpus(snippets=snippets)
     concatenation_path = generate_concatenation_path(corpus=corpus, output_length_sec=output_length, cross_fade=cross_fade)
-    concatenated = concatenate_snippets(concatenation_path, output_length=output_length, cross_fade=cross_fade)
-    sf.write(output_path, concatenated, 44100)
+    concatenated_audio = concatenation_path.render(output_length)
+    sf.write(output_path, concatenated_audio, 44100)
 
 
 def run_download_backend(backend_name, words_path, output_path, output_length = 10, max_snippets = 64, max_snippet_length = 0.5, cross_fade = 50):

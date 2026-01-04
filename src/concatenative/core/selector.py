@@ -3,6 +3,7 @@ from concatenative.core.utils import timed
 from .audio_snippet import AudioSnippet
 from .corpus import Corpus
 from .features import FEATURE_MAP
+from .concatenation_path import ConcatenationPath
 from collections import deque
 import logging
 
@@ -20,7 +21,7 @@ def generate_concatenation_path(corpus: Corpus, output_length_sec: float = 10, o
         ii. Adds the detected nearest neighbour to the concatenation path
         iv. Nearest neighbour is added to the recently_used_list to prevent immediate reuse 
         iii. Sets the detected nearest neighbour as the target for the next iteration of the loop
-    3. Returns the generated list of snippets
+    3. Returns the generated list of snippets (ConcatenationPath instance)
 
     Note that this function uses the whole length of each snippet and so it can overshoot 
     the target `output_length_sec` param, returning a longer path. This can be trimemd 
@@ -30,6 +31,7 @@ def generate_concatenation_path(corpus: Corpus, output_length_sec: float = 10, o
     :param output_length_sec: Desired length of the output concatenated path
     :param output_sample_rate: Sample rate out of the output file
     :param recent_history_size: Size of the recent snippets list to exclude from re-selection
+    :return ConcatenationPath containing the generated path through the snippets
     '''
 
     concatenation_path = []
@@ -60,4 +62,5 @@ def generate_concatenation_path(corpus: Corpus, output_length_sec: float = 10, o
     logger.info(f"Generated concatenation path of length: {len(concatenation_path)} snippets. "
                 f"Target length: {output_length_sec:.2f}s, "
                 f"Estimated actual output {output_length:.2f}s")
-    return concatenation_path
+    
+    return ConcatenationPath(concatenation_path, cross_fade_seconds=cross_fade)

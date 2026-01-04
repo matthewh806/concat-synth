@@ -6,7 +6,7 @@ from .analysis import analyse_snippets
 from .selector import generate_concatenation_path
 from .features import FEATURE_MAP, FeatureConfig
 from .corpus import Corpus
-from .concatenator import concatenate_snippets
+from .concatenation_path import ConcatenationPath
 
 __all__ = [
     "AudioSnippet"

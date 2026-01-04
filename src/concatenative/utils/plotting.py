@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from typing import List, Optional, Callable, Dict
-from concatenative.core import AudioSnippet
+from concatenative.core import AudioSnippet, ConcatenationPath
 from concatenative.core.features import FEATURE_MAP
 from uuid import UUID
 import logging
@@ -29,7 +29,7 @@ class InteractiveCorpusPlot:
             colour_feature: str,
             title: str = "Corpus Normalised Feature Map",
             on_click_callback: Optional[Callable[[AudioSnippet], None]] = None,
-            path_to_draw: Optional[List[AudioSnippet]] = None
+            path_to_draw: Optional[ConcatenationPath] = None
     ):
         self.snippets = snippets
 
@@ -151,7 +151,7 @@ class InteractiveCorpusPlot:
             return
 
         # Get the indicies of the paths we're plotting
-        path_indices = [self.snippet_id_to_index[snippet.id] for snippet in self.path_to_draw]
+        path_indices = [self.snippet_id_to_index[snippet.id] for snippet in self.path_to_draw.snippets_path]
 
         # Just in case the snippet from the path to draw wasn't in the map (i.e. not in the plotted data)
         valid_indices = [i for i in path_indices if i is not None]
