@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from typing import List
+from typing import List, Optional, Callable
 from concatenative.core import AudioSnippet
 from concatenative.core.features import FEATURE_MAP
 import logging
@@ -26,7 +26,8 @@ class InteractiveCorpusPlot:
             x_axis_feature: str,
             y_axis_feature: str,
             colour_feature: str,
-            title: str = "Corpus Normalised Feature Map"
+            title: str = "Corpus Normalised Feature Map",
+            on_click_callback: Optional[Callable[[AudioSnippet], None]] = None
     ):
         self.snippets = snippets
 
@@ -44,6 +45,7 @@ class InteractiveCorpusPlot:
         self.y_data = np.array(plot_data[y_axis_feature])
         self.colour_data = np.array(plot_data[colour_feature])
         self.title = title
+        self.on_click_callback = on_click_callback
 
         self.fig, self.ax = plt.subplots(figsize=(12,10))
         self.scatter = self.ax.scatter(
@@ -69,8 +71,10 @@ class InteractiveCorpusPlot:
 
         # -- Step 6: Connect event handlers
         self.fig.canvas.mpl_connect("motion_notify_event", self.hover)
+        self.fig.canvas.mpl_connect("button_press_event", self.on_press)
 
         self.annot.set_visible(False)
+
 
     def update_annot(self, index):
         '''
@@ -107,3 +111,23 @@ class InteractiveCorpusPlot:
                 if is_visible:
                     self.annot.set_visible(False)
                     self.fig.canvas.draw_idle()
+
+
+    def on_press(self, event):
+        '''
+        Handles button press events (button_press_event)
+        :param event: associated event (MouseEvent)
+        '''
+
+        if event.inaxes == self.ax:
+            contains, details = self.scatter.contains(event)
+            logger.debug(f"OnPress: {contains}, {details}")
+
+            if contains:
+                # Get the index of the point under the mouse. 
+                # Just get the first by default 
+                index = details['ind'][0]
+                snippet = self.snippets[index]
+
+                if self.on_click_callback:
+                    self.on_click_callback(snippet)
