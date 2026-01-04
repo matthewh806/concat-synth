@@ -59,6 +59,8 @@ def run_concatenator(file_paths, output_path, output_length = 10, max_snippet_le
     snippets = [snip for path in file_paths if (snip := audio_loader(path, max_clip_length=max_snippet_length)) is not None]
     corpus = Corpus(snippets=snippets)
     concatenation_path = generate_concatenation_path(corpus=corpus, output_length_sec=output_length, cross_fade=cross_fade)
+    logger.debug(concatenation_path.get_stats())
+
     concatenated_audio = concatenation_path.render(output_length)
     sf.write(output_path, concatenated_audio, 44100)
 
