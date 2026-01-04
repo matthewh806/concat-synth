@@ -134,17 +134,17 @@ class Corpus:
             logger.error(f"KDTree query failed: {e}")
             return None
 
-        for index in indices:
+        for index, distance in zip(indices, distances):
             candidate_snippet = self.index_to_snippet_map[index]
 
             if candidate_snippet != target_snippet and candidate_snippet not in exclusion_list:
-                logger.debug(f"Found neighbour for {target_snippet}: {candidate_snippet} -  Distance: {distances[index]}")
+                logger.debug(f"Found neighbour for {target_snippet}: {candidate_snippet} -  Distance: {distance}")
                 return candidate_snippet
             
         # Fallback in case we didn't find a neighbour
         if indices.size > 0:
             candidate_snippet = self.index_to_snippet_map[0]
-            logger.debug(f"All nearest neighbours recently used, fallback for {target_snippet}: {candidate_snippet} -  Distance: {distances[index]}")
+            logger.debug(f"All nearest neighbours recently used, fallback for {target_snippet}: {candidate_snippet} -  Distance: {distances[0]}")
 
         logger.error(f"No suitable neighbours found for {target_snippet}.")
         return None
