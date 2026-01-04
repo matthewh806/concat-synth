@@ -71,11 +71,13 @@ class ConcatenationPath:
         visit_counts = Counter(path_snippet_ids)
 
         num_visited_once = sum(1 for count in visit_counts.values() if count == 1)
+        unique_snippets = len(set(visit_counts.keys()))
         most_visited = visit_counts.most_common(5)
 
         stats = [
             "--- Path Generation Stats ---",
             f"Path Length: {len(self)}",
+            f"Unique Snippets in Path: {unique_snippets}",
             f"Snippets Visited Once: {num_visited_once}",
             f"Most Visited:"
         ]
