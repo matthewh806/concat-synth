@@ -82,7 +82,7 @@ class InteractiveCorpusPlot:
         self.fig.canvas.mpl_connect("button_press_event", self.on_press)
 
         # -- Step 7: Draw the audio path (if provided)
-        if self.on_click_callback:
+        if self.path_to_draw:
             self.draw_path()
 
 
