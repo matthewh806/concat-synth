@@ -44,6 +44,7 @@ if __name__ == "__main__":
 
     snippets = [snip for path in file_paths if (snip := audio_loader(path, max_clip_length=0.2)) is not None]
     corpus = Corpus(snippets)
+    print(f"Number of duplicate snippets: {corpus.get_number_of_duplicates()}")
     concatenation_path = generate_concatenation_path(corpus=corpus, output_length_sec=20)
 
     print(concatenation_path.get_stats())    
