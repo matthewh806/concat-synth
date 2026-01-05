@@ -27,6 +27,7 @@ class Corpus:
         analyse_snippets(snippets)
         self.build_feature_space()
         
+
     def get_random_snippet(self):
         '''
         Gets a random snippet from the corpus
@@ -53,8 +54,21 @@ class Corpus:
         
         :return: The size of the corpus
         '''
-        return len(self.snippets)
+        return len(self)
     
+    def get_number_of_duplicates(self):
+        '''
+        Gets the number of duplicates snippets in the corpus
+        
+        :return: The number of duplicates
+        '''
+
+        unique_filenames = {
+            filename for snippet in self.snippets 
+            if (filename := snippet.metadata.get('filename'))
+        }
+
+        return self.get_corpus_size() - len(unique_filenames)
 
     def _get_snippet_feature_vector(self, snippet : AudioSnippet):
         '''
@@ -147,3 +161,9 @@ class Corpus:
 
         logger.error(f"No suitable neighbours found for {target_snippet}.")
         return None
+
+    def __len__(self) -> int:
+        return len(self.snippets)
+    
+    def __repr__(self) -> str:
+        return (f"<Corpus snippets={len(self)}>")
