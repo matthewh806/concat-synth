@@ -120,6 +120,7 @@ class YoutubeAudioDownloader(AudioDownloader):
                     video_to_download_id = video_id
         
         if not video_to_download_id:
+            logger.warning(f"yt-dlp no more videos to download for {query}")
             return []
 
         logging.info(f"yt-dlp download starting for query: {query}")
