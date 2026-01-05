@@ -6,8 +6,10 @@ import numpy as np
 import soundfile as sf
 import logging
 from pathlib import Path
-from .downloaders import FreesoundAudioDownloader, YoutubeAudioDownloader
-from .core import collect_snippets_parallel, audio_loader, generate_concatenation_path, Corpus, ConcatenationPath
+from concatenative.downloaders import FreesoundAudioDownloader, YoutubeAudioDownloader, collect_snippets_parallel
+from concatenative.audio import audio_loader
+from concatenative.analysis import Corpus
+from concatenative.path import generate_concatenation_path
 
 logger = logging.getLogger(__name__)
 

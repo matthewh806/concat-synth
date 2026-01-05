@@ -4,4 +4,4 @@ from concatenative import run_download_backend
 ROOT = Path(__file__).resolve().parents[1]
 
 if __name__ == "__main__":
-    run_download_backend("youtube", ROOT / "data/words.txt", ROOT / "output.wav")
+    run_download_backend("youtube", ROOT / "data/words.txt", ROOT / "output.wav", output_length=60, max_snippets=256, max_snippet_length=0.3)

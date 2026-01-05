@@ -1,11 +1,11 @@
 from pathlib import Path
 import matplotlib.pyplot as plt
 import sounddevice as sd
-from concatenative.core import audio_loader, AudioSnippet
-from concatenative.core.corpus import Corpus
-from concatenative.core.selector import generate_concatenation_path
-from concatenative.utils.plotting import InteractiveCorpusPlot
-from concatenative.core.logger import setup_logger
+from concatenative.audio import audio_loader
+from concatenative.analysis.corpus import Corpus
+from concatenative.path.selector import generate_concatenation_path
+from concatenative.visualisation.plotting import InteractiveCorpusPlot
+from concatenative.utils.logger import setup_logger
 import logging
 import sys
 
@@ -44,7 +44,7 @@ if __name__ == "__main__":
 
     snippets = [snip for path in file_paths if (snip := audio_loader(path, max_clip_length=0.2)) is not None]
     corpus = Corpus(snippets)
-    concatenation_path = generate_concatenation_path(corpus=corpus, output_length_sec=5)
+    concatenation_path = generate_concatenation_path(corpus=corpus, output_length_sec=20)
 
     print(concatenation_path.get_stats())    
 

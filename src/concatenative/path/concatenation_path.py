@@ -1,6 +1,6 @@
 from typing import List
 from collections import Counter
-from .audio_snippet import AudioSnippet
+from concatenative.audio import AudioSnippet
 import numpy as np
 import logging
 

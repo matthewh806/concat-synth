@@ -1,7 +1,7 @@
 import argparse
 import logging
 from .concatenative_synth import run_download_backend, run_dir_backend
-from .core.logger import setup_logger
+from concatenative.utils import setup_logger
 
 '''
 This is a script which defines the CLI for the concatenative synthesis system.

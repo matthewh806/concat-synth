@@ -2,8 +2,8 @@ import logging
 import numpy as np
 from typing import List
 
-from concatenative.core.utils import timed
-from .audio_snippet import AudioSnippet
+from concatenative.utils import timed
+from concatenative.audio import AudioSnippet
 from .features import FEATURE_MAP
 
 logger = logging.getLogger(__name__)

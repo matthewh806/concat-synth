@@ -1,9 +1,8 @@
-from .audio_snippet import AudioSnippet
-from typing import List, Dict, Optional
+from concatenative.audio import AudioSnippet
 from .analysis import analyse_snippets
 from .features import FEATURE_MAP
 from collections import deque
-import math
+from typing import List, Dict, Optional
 import logging
 import numpy as np
 import random

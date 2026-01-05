@@ -1,8 +1,6 @@
-from typing import List
-from concatenative.core.utils import timed
-from .audio_snippet import AudioSnippet
-from .corpus import Corpus
-from .features import FEATURE_MAP
+from concatenative.utils.timer import timed
+from concatenative.analysis.corpus import Corpus
+from concatenative.analysis.features import FEATURE_MAP
 from .concatenation_path import ConcatenationPath
 from collections import deque
 import logging

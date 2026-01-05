@@ -1,8 +1,9 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from typing import List, Optional, Callable, Dict
-from concatenative.core import AudioSnippet, ConcatenationPath
-from concatenative.core.features import FEATURE_MAP
+from concatenative.audio.audio_snippet import AudioSnippet
+from concatenative.path.concatenation_path import ConcatenationPath
+from concatenative.analysis import FEATURE_MAP
 from uuid import UUID
 import logging
 

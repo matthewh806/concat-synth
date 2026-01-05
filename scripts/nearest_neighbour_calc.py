@@ -1,6 +1,6 @@
-from concatenative.core import audio_loader
-from concatenative.core.corpus import Corpus
-from concatenative.core.logger import setup_logger
+from concatenative.audio import audio_loader
+from concatenative.analysis.corpus import Corpus
+from concatenative.utils.logger import setup_logger
 from pathlib import Path
 import sys
 import logging
