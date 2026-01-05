@@ -1,5 +1,6 @@
 from .audio_downloader import AudioDownloader
 from pathlib import Path
+import threading
 import random
 import uuid
 from yt_dlp import YoutubeDL
@@ -57,7 +58,12 @@ class YoutubeAudioDownloader(AudioDownloader):
         self.ouput_path = output_path
         self.target_sr = target_sr
 
-    def _ydl_opts(self, download_dir, tracker, slice_dur = 0.1):
+        self.seen_video_ids = set()
+
+        # This lock prevents race conditions when accessing self.seen_video_ids
+        self.lock = threading.Lock()
+
+    def _ydl_download_opts(self, download_dir, tracker, slice_dur = 0.1):
 
         return {
             "format": "bestaudio/best",
@@ -66,7 +72,7 @@ class YoutubeAudioDownloader(AudioDownloader):
             "ignore_errors": True,
             "paths": {"home": str(download_dir)},
             "outtmpl": "%(id)s.%(ext)s",
-            "download_ranges": SliceDuration(0.1),
+            "download_ranges": SliceDuration(slice_dur),
             "progress_hooks": [tracker],
             "postprocessors": [{
                 "key": "FFmpegExtractAudio",
@@ -75,15 +81,48 @@ class YoutubeAudioDownloader(AudioDownloader):
             "postprocessor_args": ["-loglevel", "error"],
         }
     
-    def get_snippets(self, query):
+    def get_snippets(self, query, num_search_results = 5):
         '''
+        Thread safe audio downloader for youtube that uses the yt-dlp library
+        Prevents duplicate downloads within a single run.
+
+        It will query num_search_results and go through the results
+        until it finds a result which hasn't already been downloaded
+
         :param query: string to use as the query when calling the API
+        :num_search_results: Number of search results to query
 
         :return paths of the downloaded files in a list
         '''
-        logging.info(f"yt-dlp download starting for query: {query}")
+        
+        # 1. Fetch metadata for top N search results of query
+        logging.info(f"yt-dlp getting metadata for query: {query}")
+        ydl_metadata_opts = {
+            'quiet': True,
+            'no_warnings': True,
+            'extract_flat': 'in_playlist'
+        }
 
-        search_query = f'ytsearch1:"{query}"'
+        try:
+            with YoutubeDL(ydl_metadata_opts) as ydl:
+                search_result = ydl.extract_info(f"ytsearch{num_search_results}:{query}", download=False)
+                entries = search_result.get('entries', [])
+        except Exception as e:
+            logger.error(f"Failed fetching metadata for '{query}': {e}")
+            return []
+
+        video_to_download_id = None 
+        with self.lock:
+            for entry in entries:
+                video_id = entry.get('id')
+                if video_id and video_id not in self.seen_video_ids:
+                    self.seen_video_ids.add(video_id)
+                    video_to_download_id = video_id
+        
+        if not video_to_download_id:
+            return []
+
+        logging.info(f"yt-dlp download starting for query: {query}")
         tracker = DownloadTracker()
 
         # TODO: pass in as param
@@ -92,9 +131,9 @@ class YoutubeAudioDownloader(AudioDownloader):
         run_id = uuid.uuid4().hex[:6]
         query_dir = self.ouput_path / f"{query}__{run_id}"
         query_dir.mkdir(parents=True, exist_ok = True)
-        with YoutubeDL(self._ydl_opts(query_dir, tracker, slice_dur)) as ydl:
+        with YoutubeDL(self._ydl_download_opts(query_dir, tracker, slice_dur)) as ydl:
             try:
-                ydl.download([search_query])
+                ydl.download([video_to_download_id])
             except Exception as e:
                 logging.error(f"yt-dlp failed for query '{query}': {e}")
                 return []
