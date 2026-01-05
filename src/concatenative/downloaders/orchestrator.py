@@ -1,8 +1,10 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from concatenative.utils import timed
 import logging
 
 logger = logging.getLogger(__name__)
 
+@timed
 def collect_snippets_parallel(
         backend,
         queries,
