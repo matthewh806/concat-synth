@@ -81,3 +81,15 @@ concat-synth download youtube --words words.txt --max-snippets 32 --out youtube_
    - `--words <path>`: Path to a text file containing words to use as search terms. (Default: words.txt)
    - `--max-snippets <int>`: The maximum number of audio snippets to download and use. (Default: 32)
    - `-v`, `--verbose`: Enable verbose logging output (DEBUG level)
+
+
+  ## Visualizing the Corpus
+
+  The `InteractiveCorpusPlot` allows the whole corpus to be plotted in 3d feature space & has the ability to plot
+  the path through the corpus that the concatenator generates. 
+  
+  See `scripts/feature_map_plotting.py` for an example of how to set up this plotting class and display it
+
+  * Interaction: Hover over any data point to instantly see detailed information about the corresponding audio snippet
+  * Audio Auditioning: Click on any point to play the associated audio snippet
+  * Path Trajectory: Clearly see the generated concatenation path overlaid on the corpus
