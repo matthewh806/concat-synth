@@ -97,7 +97,8 @@ def analyse_snippets(snippets: List[AudioSnippet]):
 
     def task_complete_callback(result):
         '''
-        :param result: Description
+        Called by run_parallel_cpu_tasks when a task completes
+        :param result contains the snippet id and dictionary of features
         '''
         snippet = next((snippet for snippet in snippets if snippet.id == result[0]), None)
         if snippet:

@@ -106,7 +106,7 @@ def run_download_backend(backend_name, words_path, output_path, output_length = 
         results_per_word = 1 if max_snippets <= len(words) else math.ceil(len(words) / max_snippets)
         backend = FreesoundAudioDownloader(download_directory, number_of_results=results_per_word)
 
-    download_paths = collect_snippets_parallel(backend, queries, max_snippets)
+    download_paths = collect_snippets_parallel(backend, queries)
     run_concatenator(download_paths, output_path=output_path, output_length=output_length, max_snippet_length=max_snippet_length, cross_fade=cross_fade)
 
 
