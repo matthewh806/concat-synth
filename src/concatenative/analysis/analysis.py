@@ -1,7 +1,7 @@
 import logging
 import numpy as np
-from typing import List
-
+from typing import List, Callable, Iterable, Optional
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from concatenative.utils import timed
 from concatenative.audio import AudioSnippet
 from .features import FEATURE_MAP
@@ -9,6 +9,12 @@ from .features import FEATURE_MAP
 logger = logging.getLogger(__name__)
 
 def log_frame_stats(features):
+    '''
+    Convenience method for converting the features dict
+    into a nice string format for printing. 
+    
+    :param features: the features dict we want to print
+    '''
     return {
         k: (
             f"{v.item():.3f}" 
@@ -20,13 +26,16 @@ def log_frame_stats(features):
 
 def analyse_snippet(snippet : AudioSnippet):
     '''
-    Analyses an AudioSnippet and stores the 
-    result in the snippet.features dictionary
+    Analyses featurs for an AudioSnippet 
 
     The features which are calculated are defined in
     the FEATURE_MAP features.py
+
+    This may be run in a separate process, so the features
+    dict is not edited in place
     
     :param snippet: AudioSnippet to analyse
+    :return snippet.id, features dict as a tuple
     '''
     samples = snippet.samples
     sample_rate = snippet.sample_rate
@@ -37,8 +46,7 @@ def analyse_snippet(snippet : AudioSnippet):
         # This is to prevent issues with NaN post extraction (e.g. in the kd tree construction)
         features[feature_name] = feature_value if not np.isnan(feature_value) else 0.0
 
-    snippet.features = features
-    logger.debug(f"Analysis Results for {snippet}: {log_frame_stats(features=features)}")
+    return snippet.id, features
 
 @timed
 def calculate_normalised_features(snippets : List[AudioSnippet]):
@@ -46,6 +54,8 @@ def calculate_normalised_features(snippets : List[AudioSnippet]):
     Normalises features to be in the range [0,1]
     The calculated normal features are stored in 
     snippet.normalised_features
+
+    The normalised_features dict is edited in place
 
     :param snippets: List of AudioSnippet whose features are going to be normalised
     '''
@@ -85,9 +95,54 @@ def analyse_snippets(snippets: List[AudioSnippet]):
     :param snippets: List of AudioSnippets to analyse
     '''
 
+    def task_complete_callback(result):
+        '''
+        :param result: Description
+        '''
+        snippet = next((snippet for snippet in snippets if snippet.id == result[0]), None)
+        if snippet:
+            snippet.features = result[1]
+            logger.debug(f"Analysis Results for {snippet}: {log_frame_stats(features=snippet.features)}")
+
     logger.info(f"Starting analysis of {len(snippets)} snippets")
-
-    for snippet in snippets:
-        analyse_snippet(snippet)
-
+    run_parallel_cpu_tasks(analyse_snippet, snippets, task_complete_callback=task_complete_callback)
     calculate_normalised_features(snippets)
+
+
+@timed
+def run_parallel_cpu_tasks(
+        task_function: Callable,
+        tasks: Iterable,
+        task_complete_callback: Optional[Callable] = None,
+        max_workers = 4
+):
+    '''
+    Parallelised task manager for running separate processes using a ProcessPoolExecutor.
+    Note: the task_complete_callback should take the result object as a parameter
+    
+    :param task_function: The function to pass to the process executor
+    :param tasks: Iterable of the inputs to be passed to the task function
+    :param task_complete_callback: An optional method to call when a task is completed
+    :param max_workers: The number of workers to parallelise this task with
+    '''
+    
+    completed = 0
+    with ProcessPoolExecutor(max_workers=max_workers) as pool:
+        futures = {
+            pool.submit(task_function, task): task
+            for task in tasks
+        }
+
+        num_tasks = len(tasks)
+        for future in as_completed(futures):
+            task = futures[future]
+            try:
+                completed += 1
+                result = future.result()
+                if task_complete_callback:
+                    task_complete_callback(result)
+                logger.info(f"Task ({completed} / {num_tasks}) completed for {task}")
+
+            except Exception as e:
+                logger.error(f"Task {task} generated an exception: {e}")
+                continue
