@@ -1,3 +1,28 @@
+## [0.3.0] - 06-01-2026
+
+### Added
+
+- **Interactive Corpus Visualization:** Introduced a new visualization module with an `InteractiveCorpusPlot` class. This provides a 2D scatter plot of the corpus feature space with capabilities for:
+    * Hovering over points to view snippet details.
+    * Clicking points to trigger a callback (e.g., for audio playback).
+    * Drawing the generated concatenation path on the plot.
+- **`ConcatenationPath` Class:** The generated path is now a dedicated ConcatenationPath object instead of a simple list. This new class encapsulates path metadata, generation parameters, and behavior like rendering and
+statistics generation.
+- **`Corpus` Class:** This class holds the entire collection of AudioSnippets and the analysis results
+- **`requirements.txt`:** For installing all dependencies via pip
+
+### Changed
+
+- **Nearest Neighbour Algorithm**: This is no longer calculated on the fly when generating the path, but pre-calculated and stored in a `scipy.spatial.
+KDTree`
+- **Major Architectural Refactoring**: The core application has been reorganized for better clarity, scalability, and maintainability.
+    * The generic core directory has been broken down into domain-specific packages: audio, analysis, and selection.
+- **Prevent Repeat YouTube Downloads**: The YouTube downloader will no longer download the same video each time for a given query. 
+
+### Fixed
+- **Incorrect Path Generation:** The exclusion list was being compared against the Snippet itself rather than the ID, meaning the result was always false. This led to paths being generated which just oscillated between two nearest neighbour snippets
+
+
 ## [0.2.0] - 01-01-2026
 
 ### Added
@@ -19,7 +44,7 @@
 - **Inaccurate Output Duration:** The path generation logic now correctly accounts for the cross-fade duration, resulting in an output duration that more accurately matches the users target.
 - **Target Length Overshoot:** The final rendered audio is now precisely trimmed to the requested output length, preventing the generated file from being longer than specified.
 
-## [0.1.0] - 2025-12-30
+## [0.1.0] - 30-12-2025
 
 ### Added
 - **Initial Project Setup:** Established the project as a standard Python package, including basic directory structure and dependency management.
