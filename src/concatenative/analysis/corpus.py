@@ -111,6 +111,12 @@ class Corpus:
                 self.index_to_snippet_map[map_index] = snippet
                 feature_vectors.append(vector)
 
+        if not feature_vectors:
+            raise ValueError(
+                "Cannot build feature space for an empty corpus."
+                "Ensure corpus has snippets with valid feature vectors"
+            )
+
         self.search_tree = KDTree(np.array(feature_vectors))
 
     
