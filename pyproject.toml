@@ -21,6 +21,22 @@ dependencies = [
     "freesound-python",
 ]
 
+[project.optional-dependencies]
+dev = [
+  "pytest",
+]
+
+[tool.pytest.ini_options]
+min_version = 6.0
+addopts = "--import-mode=append --strict-markers"
+
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+
 [project.scripts]
 # This creates the 'concat-synth' command and points it to the
 # 'main' function inside the 'cli.py' file.
