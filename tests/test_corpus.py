@@ -25,6 +25,37 @@ def test_empty_corpus():
         Corpus([])
 
 
+def test_corpus_size(dummy_corpus):
+    '''
+    Test the size of the corpus is as expected
+    '''
+    assert(len(dummy_corpus) == 3)
+    assert(dummy_corpus.get_corpus_size() == 3)
+
+
+def test_corpus_contains(dummy_corpus):
+    '''
+    Test the corpus correctly determines if it contains a snippet
+    '''
+    snippet = dummy_corpus.snippets [0]
+    assert(snippet in dummy_corpus)
+
+    non_member_snippet = AudioSnippet(samples = generate_sine_wave(freq=440, duration_s=0.5, amp=0.7), sample_rate=44100, metadata={'filename': 'D'})
+    assert(non_member_snippet not in dummy_corpus)
+
+
+def test_corpus_duplicates(dummy_corpus):
+    '''
+    Test the corpus correctly identifies duplicates
+    '''
+    assert(dummy_corpus.get_number_of_duplicates() == 0)
+
+    duplicate_snippet = dummy_corpus.snippets[0]
+    dummy_corpus.snippets.append(duplicate_snippet)
+
+    assert(dummy_corpus.get_number_of_duplicates() == 1)
+
+
 def test_nearest_neighbour_search(dummy_corpus):
     '''
     Test that the nearest neighbour search returns the expected snippet
