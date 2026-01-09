@@ -19,6 +19,8 @@ dependencies = [
     "librosa",
     "yt-dlp",
     "freesound-python",
+    "scipy",
+    "sounddevice"
 ]
 
 [project.optional-dependencies]
