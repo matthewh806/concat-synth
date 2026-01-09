@@ -165,5 +165,8 @@ class Corpus:
     def __len__(self) -> int:
         return len(self.snippets)
     
+    def __contains__(self, snippet) -> bool:
+        return any(s.id == snippet.id for s in self.snippets)
+    
     def __repr__(self) -> str:
         return (f"<Corpus snippets={len(self)}>")
