@@ -8,7 +8,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 @timed 
-def generate_concatenation_path(corpus: Corpus, output_length_sec: float = 10, output_sample_rate = 44100, recent_history_size = 10, cross_fade=50):
+def generate_concatenation_path(corpus: Corpus, output_length_sec: float = 10, output_sample_rate = 44100, start_snippet = None, recent_history_size = 10, cross_fade=50):
     '''
     Generates a path for the concatenator to use to create the audio collage / mosaic
 
@@ -28,12 +28,13 @@ def generate_concatenation_path(corpus: Corpus, output_length_sec: float = 10, o
     :param corpus: Corpus containing AudioSnippets and analysis data
     :param output_length_sec: Desired length of the output concatenated path
     :param output_sample_rate: Sample rate out of the output file
+    :param start_snippet: Snippet to start with from the Corpus, if None a random one is picked
     :param recent_history_size: Size of the recent snippets list to exclude from re-selection
     :return ConcatenationPath containing the generated path through the snippets
     '''
 
     concatenation_path = []
-    target = corpus.get_random_snippet()
+    target = start_snippet if start_snippet and start_snippet in corpus else corpus.get_random_snippet() 
     concatenation_path.append(target)
     corpus_size = corpus.get_corpus_size()
 
