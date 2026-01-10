@@ -65,3 +65,58 @@ def test_nearest_neighbour_search(dummy_corpus):
 
     assert(nearest_neighbour != None)
     assert(nearest_neighbour.metadata['filename'] == 'B')
+
+
+def test_nearest_neighbour_exclusion(dummy_corpus):
+    '''
+    Tests that the corpus does not select the nearest neighbour if its in the exclusion list with no fallback
+    '''
+
+    target = dummy_corpus.snippets[0]
+    exclusion_list = deque([dummy_corpus.snippets[1].id])
+    nearest_neighbour = dummy_corpus.nearest_neighbour_search(target, exclusion_list=exclusion_list, fallback=False)
+
+    assert(nearest_neighbour != None)
+    assert(nearest_neighbour.metadata['filename'] != 'B')
+    assert(nearest_neighbour.metadata['filename'] == 'C')
+
+
+def test_no_possible_neighbours(dummy_corpus):
+    '''
+    Tests that the corpus returns None when all other neighbours are in the exclusion list with no fallback
+    '''
+
+    target = dummy_corpus.snippets[0]
+    exclusion_list = deque([s.id for s in dummy_corpus.snippets])
+
+    nearest_neighbour = dummy_corpus.nearest_neighbour_search(target, exclusion_list=exclusion_list, fallback=False)
+    assert(nearest_neighbour == None)
+
+
+def test_no_possible_neighbours_fallback(dummy_corpus):
+    '''
+    Tests that the corpus returns None when all other neighbours are in the exclusion list with fallback
+    '''
+
+    target = dummy_corpus.snippets[0]
+    exclusion_list = deque([s.id for s in dummy_corpus.snippets])
+
+    nearest_neighbour = dummy_corpus.nearest_neighbour_search(target, exclusion_list=exclusion_list, fallback=True)
+    
+    assert(nearest_neighbour != None)
+    assert(nearest_neighbour.metadata['filename'] == 'B')
+
+
+def test_setting_nearest_neighbour_num_candidates(dummy_corpus):
+    '''
+    Tests that the corpus nearest neighbour method works as expected when num_candidates is specified
+
+    Note this test is a bit weird, but makes sense, when num_candidates is just 1 it finds itself from the tree and we exclude that
+    hence None is returned.
+    '''
+
+    target = dummy_corpus.snippets[0]
+    exclusion_list = deque([s.id for s in dummy_corpus.snippets])
+
+    nearest_neighbour = dummy_corpus.nearest_neighbour_search(target, exclusion_list=exclusion_list, fallback=True, num_candidates=1)
+    assert(nearest_neighbour == None)
