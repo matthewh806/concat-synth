@@ -3,6 +3,7 @@ from .analysis import analyse_snippets
 from .features import FEATURE_MAP
 from collections import deque
 from typing import List, Dict, Optional
+import uuid
 import logging
 import numpy as np
 import random
@@ -123,8 +124,9 @@ class Corpus:
     def nearest_neighbour_search(
             self,
             target_snippet: AudioSnippet,
-            exclusion_list: deque[AudioSnippet],
-            num_candidates: int = 10
+            exclusion_list: deque[uuid.UUID],
+            num_candidates: int = 10,
+            fallback: bool = True
     ) -> AudioSnippet:
         '''
         Find the nearest neighbour snippet for a given target snippet from the corpus
@@ -141,29 +143,36 @@ class Corpus:
         
         :param target_snippet: AudioSnippet to use as the target
         :param a queue containing samples to skip from the nn calculation
+        :param if True if no neighbours are found try to fallback on the best alternative option, False returns none if none found
         :return: The nearnest neighbour AudioSnippet 
         '''
 
         target_feature_vector = self._get_snippet_feature_vector(target_snippet)
-        #num_neighbours = num_candidates if num_candidates
+        candidates_to_search = min(len(self), num_candidates)
 
         try:
-            distances, indices = self.search_tree.query(target_feature_vector, k = num_candidates)
+            distances, indices = self.search_tree.query(target_feature_vector, k = candidates_to_search)
         except Exception as e:
             logger.error(f"KDTree query failed: {e}")
             return None
+        
+        if num_candidates == 1:
+            indices = [indices]
+            distances = [distances]
 
         for index, distance in zip(indices, distances):
-            candidate_snippet = self.index_to_snippet_map[index]
+            candidate_snippet = self.index_to_snippet_map[int(index)]
 
             if candidate_snippet != target_snippet and candidate_snippet.id not in exclusion_list:
                 logger.debug(f"Found neighbour for {target_snippet}: {candidate_snippet} -  Distance: {distance}")
                 return candidate_snippet
             
         # Fallback in case we didn't find a neighbour
-        if indices.size > 0:
-            candidate_snippet = self.index_to_snippet_map[0]
-            logger.debug(f"All nearest neighbours recently used, fallback for {target_snippet}: {candidate_snippet} -  Distance: {distances[0]}")
+        if fallback and len(indices) > 1:
+            # Note used 1 here because a tree will find itself if queried with its own feature vector
+            candidate_snippet = self.index_to_snippet_map[1]
+            logger.debug(f"All nearest neighbours recently used, fallback for {target_snippet}: {candidate_snippet} -  Distance: {distances[1]}")
+            return candidate_snippet
 
         logger.error(f"No suitable neighbours found for {target_snippet}.")
         return None
