@@ -170,6 +170,7 @@ class Corpus:
         # Fallback in case we didn't find a neighbour
         if fallback and len(indices) > 1:
             # Note used 1 here because a tree will find itself if queried with its own feature vector
+            # If the idea of targets is introduced I'll need to be more careful here!
             candidate_snippet = self.index_to_snippet_map[1]
             logger.debug(f"All nearest neighbours recently used, fallback for {target_snippet}: {candidate_snippet} -  Distance: {distances[1]}")
             return candidate_snippet
