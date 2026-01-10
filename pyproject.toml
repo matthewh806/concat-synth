@@ -18,7 +18,7 @@ dependencies = [
     "soundfile",
     "librosa",
     "yt-dlp",
-    "freesound-python",
+    "freesound-python @ git+https://github.com/MTG/freesound-python.git@73cf6d14f7ce8174d943bdc78ff30f99878a5db8",
     "scipy",
     "sounddevice"
 ]
