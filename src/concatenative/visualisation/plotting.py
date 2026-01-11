@@ -41,7 +41,7 @@ class InteractiveCorpusPlot:
                 if feature in snippet.normalised_features:
                     plot_data[feature].append(snippet.normalised_features[feature])
                 else:
-                    logger.warning("Feature {feature} missing from {snippet}. Excluding from plot")
+                    logger.warning(f"Feature {feature} missing from {snippet}. Excluding from plot")
 
         self.x_data = np.array(plot_data[x_axis_feature])
         self.y_data = np.array(plot_data[y_axis_feature])
