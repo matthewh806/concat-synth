@@ -4,7 +4,7 @@ from typing import List
 from concatenative.utils import timed
 from concatenative.audio import AudioSnippet
 from concatenative.utils import run_parallel_cpu_tasks
-from .features import FEATURE_MAP
+from .feature_extractor import FeatureExtractor
 
 logger = logging.getLogger(__name__)
 
@@ -24,32 +24,27 @@ def log_frame_stats(features):
         for k, v in features.items()
     }
 
-def analyse_snippet(snippet : AudioSnippet):
+def analyse_snippet(snippet : AudioSnippet, feature_extractor: FeatureExtractor):
     '''
     Analyses featurs for an AudioSnippet 
 
-    The features which are calculated are defined in
-    the FEATURE_MAP features.py
+    The features which are calculated are defined by the feature_extractor
 
     This may be run in a separate process, so the features
     dict is not edited in place
     
     :param snippet: AudioSnippet to analyse
+    :param feature_extractor: Instance of FeatureExtractor which determines the features to extract
     :return snippet.id, features dict as a tuple
     '''
     samples = snippet.samples
     sample_rate = snippet.sample_rate
 
-    features = {}
-    for feature_name, feature_config in FEATURE_MAP.items():
-        feature_value = feature_config.extractor(samples, sample_rate)
-        # This is to prevent issues with NaN post extraction (e.g. in the kd tree construction)
-        features[feature_name] = feature_value if not np.isnan(feature_value) else 0.0
-
+    features = feature_extractor.extract(samples=samples, sample_rate=sample_rate)
     return snippet.id, features
 
 @timed
-def calculate_normalised_features(snippets : List[AudioSnippet]):
+def calculate_normalised_features(snippets : List[AudioSnippet], feature_extractor: FeatureExtractor):
     '''
     Normalises features to be in the range [0,1]
     The calculated normal features are stored in 
@@ -58,11 +53,12 @@ def calculate_normalised_features(snippets : List[AudioSnippet]):
     The normalised_features dict is edited in place
 
     :param snippets: List of AudioSnippet whose features are going to be normalised
+    :param feature_extractor: Instance of FeatureExtractor which determines the features to normalise
     '''
 
     feature_bounds = {}
-    for feature_name in FEATURE_MAP.keys():
-        feature_bounds[feature_name] = {'min': float('inf'), 'max': float('-inf')}
+    for feature in feature_extractor:
+        feature_bounds[feature.name] = {'min': float('inf'), 'max': float('-inf')}
 
     for snippet in snippets:
         for feature_name, value in snippet.features.items():
@@ -88,11 +84,12 @@ def calculate_normalised_features(snippets : List[AudioSnippet]):
             logging.debug(f"{feature_name}: {value:.4f}, normalised: {snippet.normalised_features[feature_name]:.4f}")
 
 @timed
-def analyse_snippets(snippets: List[AudioSnippet]):
+def analyse_snippets(snippets: List[AudioSnippet], feature_extractor: FeatureExtractor):
     '''
     Performs a feature analysis and extraction on audio snippets
     
     :param snippets: List of AudioSnippets to analyse
+    :param feature_extractor: Instance of FeatureExtractor which determines the features to extract
     '''
 
     def task_complete_callback(result):
@@ -106,5 +103,12 @@ def analyse_snippets(snippets: List[AudioSnippet]):
             logger.debug(f"Analysis Results for {snippet}: {log_frame_stats(features=snippet.features)}")
 
     logger.info(f"Starting analysis of {len(snippets)} snippets")
-    run_parallel_cpu_tasks(analyse_snippet, snippets, task_complete_callback=task_complete_callback)
-    calculate_normalised_features(snippets)
+
+    #TODO fix the run_parallel_cpu_tasks to take arguments
+    #run_parallel_cpu_tasks(analyse_snippet, snippets, feature_extractor, task_complete_callback=task_complete_callback)
+    for snippet in snippets:
+        _, features = analyse_snippet(snippet=snippet, feature_extractor=feature_extractor)
+        snippet.features = features
+        logger.debug(f"Analysis Results for {snippet}: {log_frame_stats(features=snippet.features)}")
+
+    calculate_normalised_features(snippets, feature_extractor=feature_extractor)

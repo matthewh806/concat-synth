@@ -1,6 +1,6 @@
 from concatenative.audio import AudioSnippet
 from .analysis import analyse_snippets
-from .features import FEATURE_MAP
+from .feature_extractor import FeatureExtractor
 from collections import deque
 from typing import List, Dict, Optional
 import uuid
@@ -12,12 +12,13 @@ from scipy.spatial import KDTree
 logger = logging.getLogger(__name__)
 
 class Corpus:
-    def __init__(self, snippets: List[AudioSnippet]):
+    def __init__(self, snippets: List[AudioSnippet], feature_extractor: FeatureExtractor):
 
         if not snippets:
             ValueError("Cannot initialise an empty corpus.")
 
         self.snippets = snippets
+        self.feature_extractor = feature_extractor
 
         # The stored feature search space tree
         self.search_tree: Optional[KDTree] = None
@@ -25,7 +26,7 @@ class Corpus:
         # A mapping from the internal KDTree index back to the snippet object
         self.index_to_snippet_map : Dict[int, AudioSnippet] = {}
 
-        analyse_snippets(snippets)
+        analyse_snippets(snippets, feature_extractor=feature_extractor)
         self.build_feature_space()
         
 
@@ -71,7 +72,7 @@ class Corpus:
 
         return self.get_corpus_size() - len(unique_filenames)
 
-    def _get_snippet_feature_vector(self, snippet : AudioSnippet):
+    def _get_snippet_feature_vector(self, snippet : AudioSnippet, feature_extractor: FeatureExtractor):
         '''
         Getst the k dimensional feature vector for an AudioSnippet
         This will look through the feature map and for each feature
@@ -82,12 +83,12 @@ class Corpus:
         
         feature_vector = []
 
-        for feature_name, _ in FEATURE_MAP.items():
-            if feature_name in snippet.normalised_features:
-                value = snippet.normalised_features[feature_name]
+        for feature in feature_extractor:
+            if feature.name in snippet.normalised_features:
+                value = snippet.normalised_features[feature.name]
 
                 if value is None:
-                    logger.warning(f"Snippet {snippet.id} is missing the feature '{feature_name}' and will be excluded from the feature space")
+                    logger.warning(f"Snippet {snippet.id} is missing the feature '{feature.name}' and will be excluded from the feature space")
                     return None
                 
                 feature_vector.append(value)
@@ -106,7 +107,7 @@ class Corpus:
 
         feature_vectors = []
         for snippet in self.snippets:
-            vector = self._get_snippet_feature_vector(snippet)
+            vector = self._get_snippet_feature_vector(snippet, self.feature_extractor)
             if vector is not None:
                 map_index = len(feature_vectors)
                 self.index_to_snippet_map[map_index] = snippet
@@ -147,7 +148,7 @@ class Corpus:
         :return: The nearnest neighbour AudioSnippet 
         '''
 
-        target_feature_vector = self._get_snippet_feature_vector(target_snippet)
+        target_feature_vector = self._get_snippet_feature_vector(target_snippet, self.feature_extractor)
         candidates_to_search = min(len(self), num_candidates)
 
         try:

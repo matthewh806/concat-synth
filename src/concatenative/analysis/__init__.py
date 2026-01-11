@@ -1,4 +1,4 @@
-from .analysis import analyse_snippets, analyse_snippet
+from .analysis import analyse_snippets, analyse_snippet, calculate_normalised_features
 from .features import FEATURE_MAP
 from .corpus import Corpus
 
