@@ -2,10 +2,11 @@ import numpy as np
 from .features import Feature
 from typing import List, Dict
 import logging
+from collections.abc import Sequence
 
 logger = logging.getLogger(__name__)
 
-class FeatureExtractor:
+class FeatureExtractor(Sequence):
 
     def __init__(self, features: List[Feature]):
         '''
@@ -18,6 +19,23 @@ class FeatureExtractor:
 
         self.features = features
 
+    def __iter__(self):
+        return iter(self.features)
+    
+    def __len__(self):
+        return len(self.features)
+    
+    def __getitem__(self, index):
+        return self.features[index]
+    
+    def supports_feature(self, name: str) -> bool:
+        '''
+        Checks if a feature matching name exists in the collection for extraction
+
+        :param name the name of the feature to look up
+        :return: true if the feature is in the collection, false otherwise
+        '''
+        return any(f.name == name for f in self.features)
 
     def extract(self, samples: np.ndarray, sample_rate: int) -> Dict[str, float]:
         '''
