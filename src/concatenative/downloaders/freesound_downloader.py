@@ -53,7 +53,7 @@ class FreesoundAudioDownloader(AudioDownloader):
 
         return out_dir / filename
 
-    def get_snippets(self, query):
+    def download_audio(self, query):
             '''
             :param query: string to use as the query when calling the API
 

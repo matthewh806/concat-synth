@@ -81,7 +81,7 @@ class YoutubeAudioDownloader(AudioDownloader):
             "postprocessor_args": ["-loglevel", "error"],
         }
     
-    def get_snippets(self, query, num_search_results = 5):
+    def download_audio(self, query, num_search_results = 5):
         '''
         Thread safe audio downloader for youtube that uses the yt-dlp library
         Prevents duplicate downloads within a single run.

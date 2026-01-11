@@ -7,5 +7,5 @@ class AudioDownloader(ABC):
     audio downloader subclasses
     '''
     @abstractmethod
-    def get_snippets(self, query) -> list[Path]:
+    def download_audio(self, query) -> list[Path]:
         pass

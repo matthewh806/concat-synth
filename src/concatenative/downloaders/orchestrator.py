@@ -27,5 +27,5 @@ def collect_snippets_parallel(
         for snippet in result:
             snippets.append(snippet)
 
-    run_parallel_io_tasks(backend.get_snippets, queries, task_complete_callback=task_complete_callback)
+    run_parallel_io_tasks(backend.download_audio, queries, task_complete_callback=task_complete_callback)
     return snippets
