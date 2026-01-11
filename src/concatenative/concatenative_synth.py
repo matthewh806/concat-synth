@@ -9,7 +9,11 @@ from pathlib import Path
 from concatenative.downloaders import FreesoundAudioDownloader, YoutubeAudioDownloader, collect_snippets_parallel
 from concatenative.audio import audio_loader
 from concatenative.analysis import Corpus
+from concatenative.analysis.features import Feature
+from concatenative.analysis.feature_extractor import FeatureExtractor
 from concatenative.path import generate_concatenation_path
+
+import librosa
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +21,22 @@ API_KEY = os.environ.get("FREESOUND_API_KEY")
 
 current_directory = Path()
 download_directory = current_directory / "audio_downloads"
+
+#TODO: Dont hardcode this here!
+features = [
+    Feature(
+        name='rms',
+        extractor = lambda samples, _ : np.mean(librosa.feature.rms(y = samples))
+    ),
+    Feature(
+        name='pitch',
+        extractor = lambda samples, sr : np.mean(librosa.pyin(y=samples, fmin=50, fmax=5000, sr=sr))
+    ),
+    Feature (
+        name="spectral centroid",
+        extractor = lambda samples, sr : np.mean(librosa.feature.spectral_centroid(y=samples, sr=sr))
+    )
+]
 
 def get_random_phrase(word_list, phrase_len = 2):
     '''
@@ -58,8 +78,10 @@ def run_concatenator(file_paths, output_path, output_length = 10, max_snippet_le
         sys.exit(1)
 
     logger.info(f"Loading {len(file_paths)} files into the concatenator")
+
+    feature_extractor = FeatureExtractor(features=features)
     snippets = [snip for path in file_paths if (snip := audio_loader(path, max_clip_length=max_snippet_length)) is not None]
-    corpus = Corpus(snippets=snippets)
+    corpus = Corpus(snippets=snippets, feature_extractor=feature_extractor)
     concatenation_path = generate_concatenation_path(corpus=corpus, output_length_sec=output_length, cross_fade=cross_fade)
     logger.debug(concatenation_path.get_stats())
 
