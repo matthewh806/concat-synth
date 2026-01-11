@@ -2,6 +2,7 @@ import argparse
 import logging
 from .concatenative_synth import run_download_backend, run_dir_backend
 from concatenative.utils import setup_logger
+from concatenative.analysis.available_features import FEATURE_REGISTRY
 
 '''
 This is a script which defines the CLI for the concatenative synthesis system.
@@ -21,6 +22,13 @@ def main():
     parent_parser.add_argument(
         "--max-slice-length", type=float, default=0.5,
         help="Maximum length of each slice (seconds)"
+    )
+    parent_parser.add_argument(
+        "--features", type=str, default='rms, pitch, spectral centroid',
+        help=(  
+            "A comma separated list of features to use for analysis.\n"
+            f"Available options: {', '.join(FEATURE_REGISTRY.keys())}"
+        )
     )
     parent_parser.add_argument(
         "--fade", type=int, default=50,
@@ -65,12 +73,22 @@ def main():
     if args.command:
         setup_logger(log_level=args.loglevel)
 
+    feature_list = args.features.split(",")
+    features = []
+    for feature_name in feature_list:
+        feature_name = feature_name.lstrip().rstrip()
+        if not feature_name in FEATURE_REGISTRY.keys():
+            raise ValueError(f"Feature {feature_name} not a known feature, available features: {', '.join(FEATURE_REGISTRY.keys())}")
+        features.append(feature_name)
+
+
     if args.command == "download":
         run_download_backend(
             backend_name = args.backend,
             words_path = args.words,
             output_length=args.output_length,
             output_path = args.out,
+            feature_set=features,
             max_snippets = args.max_snippets,
             max_snippet_length=args.max_slice_length,
             cross_fade=args.fade
@@ -79,6 +97,7 @@ def main():
         run_dir_backend(
             input_dir= args.input_dir,
             output_path= args.out,
+            feature_set=features,
             output_length=args.output_length,
             max_snippet_length=args.max_slice_length,
             cross_fade=args.fade
