@@ -1,12 +1,24 @@
 from concatenative.audio import AudioSnippet
 from concatenative.analysis import Corpus
+from concatenative.analysis.features import Feature
+from concatenative.analysis.feature_extractor import FeatureExtractor
 from .helpers import generate_sine_wave
 
 import pytest
 from collections import deque
+import numpy as np
+import librosa
 
 @pytest.fixture
-def dummy_corpus():
+def dummy_feature_extractor():
+    return FeatureExtractor([
+        Feature(name="rms", extractor= lambda samples, _ : np.mean(librosa.feature.rms(y = samples))),
+        Feature(name="pitch", extractor = lambda samples, sr : np.mean(librosa.pyin(y=samples, fmin=50, fmax=5000, sr=sr))),
+        Feature(name="spectral centroid", extractor = lambda samples, sr : np.mean(librosa.feature.spectral_centroid(y=samples, sr=sr)))
+    ])
+
+@pytest.fixture
+def dummy_corpus(dummy_feature_extractor):
     duration = 0.1
     sr = 44100
 
@@ -14,15 +26,15 @@ def dummy_corpus():
         AudioSnippet(samples = generate_sine_wave(freq=440, duration_s=duration, amp=0.7, sample_rate=sr), sample_rate=44100, metadata={'filename': 'A'}),
         AudioSnippet(samples = generate_sine_wave(freq=450, duration_s=duration, amp=0.75, sample_rate=sr), sample_rate=44100, metadata={'filename': 'B'}),
         AudioSnippet(samples = generate_sine_wave(freq=5000, duration_s=duration, amp=0.1, sample_rate=sr), sample_rate=44100, metadata={'filename': 'C'})
-    ])
+    ], feature_extractor=dummy_feature_extractor)
 
 
-def test_empty_corpus():
+def test_empty_corpus(dummy_feature_extractor):
     '''
     Test creating an empty corpus raises a value error
     '''
     with pytest.raises(ValueError):
-        Corpus([])
+        Corpus([], feature_extractor=dummy_feature_extractor)
 
 
 def test_corpus_size(dummy_corpus):

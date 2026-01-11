@@ -1,55 +1,83 @@
 from concatenative.audio import AudioSnippet
-from concatenative.analysis import Corpus, analyse_snippet
-from concatenative.analysis import FEATURE_MAP
+from concatenative.analysis import analyse_snippet, analyse_snippets, calculate_normalised_features
+from concatenative.analysis.feature_extractor import FeatureExtractor
+from concatenative.analysis.features import Feature
 from .helpers import generate_sine_wave, generate_white_noise
 
 import pytest
-from collections import deque
+import numpy as np
+import librosa
 
 @pytest.fixture
-def dummy_corpus():
+def dummy_feature_extractor():
+    return FeatureExtractor([
+        Feature(name="rms", extractor= lambda samples, _ : np.mean(librosa.feature.rms(y = samples))),
+        Feature(name="pitch", extractor = lambda samples, sr : np.mean(librosa.pyin(y=samples, fmin=50, fmax=5000, sr=sr))),
+        Feature(name="spectral centroid", extractor = lambda samples, sr : np.mean(librosa.feature.spectral_centroid(y=samples, sr=sr)))
+    ])
+
+@pytest.fixture
+def dummy_snippets(dummy_feature_extractor):
     duration = 0.1
     sr = 44100
 
-    return Corpus([
+    return [
         AudioSnippet(samples = generate_sine_wave(freq=440, duration_s=duration, amp=0.7, sample_rate=sr), sample_rate=44100, metadata={'filename': 'A'}),
         AudioSnippet(samples = generate_sine_wave(freq=450, duration_s=duration, amp=0.75, sample_rate=sr), sample_rate=44100, metadata={'filename': 'B'}),
         AudioSnippet(samples = generate_sine_wave(freq=5000, duration_s=duration, amp=0.1, sample_rate=sr), sample_rate=44100, metadata={'filename': 'C'})
-    ])
+    ]
 
-def test_analysed_features_match_expected(dummy_corpus):
+
+def test_analysed_features_match_expected(dummy_snippets, dummy_feature_extractor):
     '''
     Tests that the features appearing in the individual AudioSnippets
     match what we expected based on the feature map used
     '''
 
-    for snippet in dummy_corpus.snippets:
-        assert(snippet.metadata)
-        assert(snippet.features.keys() == FEATURE_MAP.keys())
-        assert(snippet.normalised_features.keys() == FEATURE_MAP.keys())
+    _, features = analyse_snippet(dummy_snippets[0], dummy_feature_extractor)
+
+    assert len(features) == len(dummy_feature_extractor)
+    for feature_name in features.keys():
+        assert dummy_feature_extractor.supports_feature(feature_name)
 
 
-def test_feature_normalisation(dummy_corpus):
+def test_feature_normalisation(dummy_snippets, dummy_feature_extractor):
     '''
     Tests all values are in the range [0,1] after normalisation
     Test min and max of each feature
     '''
     
-    for snippet in dummy_corpus.snippets:
-        for value in snippet.normalised_features.values():
-            assert 0.0 <= float(value) <= 1.0
+    for snippet in dummy_snippets:
+        _, features = analyse_snippet(snippet=snippet, feature_extractor=dummy_feature_extractor)
+        snippet.features = features
 
-def test_values_cover_normalisation_range(dummy_corpus):
+    calculate_normalised_features(snippets=dummy_snippets, feature_extractor=dummy_feature_extractor)
+    
+    for snippet in dummy_snippets:
+        assert len(snippet.normalised_features) == len(dummy_feature_extractor)
+
+        for feature_name, feature_value in snippet.normalised_features.items():
+            dummy_feature_extractor.supports_feature(feature_name)
+            assert 0.0 <= float(feature_value) <= 1.0
+
+
+def test_values_cover_normalisation_range(dummy_snippets, dummy_feature_extractor):
     '''
     Test that the full [0,1] range is represented by 
     normalised features
     '''
 
-    for feature_name in FEATURE_MAP.keys():
+    for snippet in dummy_snippets:
+        _, features = analyse_snippet(snippet=snippet, feature_extractor=dummy_feature_extractor)
+        snippet.features = features
+
+    calculate_normalised_features(snippets=dummy_snippets, feature_extractor=dummy_feature_extractor)
+
+    for feature in dummy_feature_extractor:
         min_v = float('inf')
         max_v = float('-inf')
-        for snippet in dummy_corpus.snippets:
-            value = snippet.normalised_features[feature_name]
+        for snippet in dummy_snippets:
+            value = snippet.normalised_features[feature.name]
             min_v = min(value, min_v)
             max_v = max(value, max_v)
         
@@ -57,13 +85,13 @@ def test_values_cover_normalisation_range(dummy_corpus):
         assert max_v == pytest.approx(1.0)
 
 
-def test_nan_handled_correctly(dummy_corpus):
+def test_nan_handled_correctly(dummy_feature_extractor):
     '''
     Test that any NaN values are converted to 0.0
     '''
     
     noise_snippet = AudioSnippet(samples = generate_white_noise(0.1), sample_rate=44100, metadata={'filename': 'A'})
-    _, features = analyse_snippet(noise_snippet)
+    _, features = analyse_snippet(noise_snippet, feature_extractor=dummy_feature_extractor)
 
     assert features['pitch'] == pytest.approx(0.0)
     
