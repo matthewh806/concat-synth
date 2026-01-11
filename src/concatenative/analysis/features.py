@@ -4,37 +4,28 @@ import numpy as np
 import librosa
 
 @dataclass
-class FeatureConfig:
+class Feature:
 
     # Function to extract the feature e.g. from librosa
     # It takes (samples, sample rate) and returns the feature value(s)
     extractor: Callable[[np.ndarray, int], Any]
     
-    # The function to calculate the distance between two normalised
-    # feature values
-    distance_fn: Callable[[Any, Any], float]
-    
     # Friendly name for logging / printing
     name: str
 
-def absolute_distance(feat_value_a, feat_value_b):
-    return abs(feat_value_a - feat_value_b)
 
 #TODO: Not really sure this should be a constant (or kept here...)
 FEATURE_MAP = {
-    'rms': FeatureConfig(
+    'rms': Feature(
         name='rms',
-        extractor = lambda samples, _ : np.mean(librosa.feature.rms(y = samples)),
-        distance_fn = absolute_distance
+        extractor = lambda samples, _ : np.mean(librosa.feature.rms(y = samples))
     ),
-    'pitch': FeatureConfig(
+    'pitch': Feature(
         name='pitch',
-        extractor = lambda samples, sr : np.mean(librosa.pyin(y=samples, fmin=50, fmax=5000, sr=sr)),
-        distance_fn = absolute_distance
+        extractor = lambda samples, sr : np.mean(librosa.pyin(y=samples, fmin=50, fmax=5000, sr=sr))
     ),
-    'spectral_centroid': FeatureConfig (
+    'spectral_centroid': Feature (
         name="spectral centroid",
-        extractor = lambda samples, sr : np.mean(librosa.feature.spectral_centroid(y=samples, sr=sr)),
-        distance_fn = absolute_distance
+        extractor = lambda samples, sr : np.mean(librosa.feature.spectral_centroid(y=samples, sr=sr))
     )
 }
