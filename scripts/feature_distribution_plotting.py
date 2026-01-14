@@ -10,6 +10,8 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 
+FEATURE = 'pitch'
+
 if __name__ == "__main__":
 
     setup_logger(log_level=logging.DEBUG)
@@ -22,9 +24,13 @@ if __name__ == "__main__":
         logger.error(f"No audio files found!")
         sys.exit(1)
 
-    feature_set = [FEATURE_REGISTRY['rms']]
+    if FEATURE not in FEATURE_REGISTRY:
+        logger.error(f"Feature {FEATURE} is not supported!")
+        sys.exit(1)
+
+    feature_set = [FEATURE_REGISTRY[FEATURE]]
 
     snippets = [snip for path in file_paths if (snip := audio_loader(path, max_clip_length=0.2)) is not None]
     corpus = Corpus(snippets, FeatureExtractor(features=feature_set))
 
-    plot_corpus_feature_distribution(corpus, feature_name="rms")
+    plot_corpus_feature_distribution(corpus, feature_name=FEATURE)
