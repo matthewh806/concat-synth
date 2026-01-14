@@ -11,6 +11,7 @@ from concatenative.analysis import Corpus
 from concatenative.analysis.feature_extractor import FeatureExtractor
 from concatenative.analysis.available_features import FEATURE_REGISTRY
 from concatenative.path import generate_concatenation_path
+from concatenative.constants import SUPPORTED_AUDIO_EXTENSIONS 
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +53,9 @@ def load_words(filename, limit=10):
 
 def run_concatenator(file_paths, output_path, feature_set, output_length = 10, max_snippet_length = 0.5, cross_fade = 50):
     '''
-    Loads the audio files, concatenates them and outputs the audio 
+    Loads the audio files, concatenates them and outputs the audio. 
+
+    Note: The output format is determined by the extension in the `output_path` parameter
 
     :param file_paths list of file paths to use in the concatenation process
     :param output_path path to the concatenated output audio file
@@ -66,6 +69,9 @@ def run_concatenator(file_paths, output_path, feature_set, output_length = 10, m
     if len(file_paths) == 0:
         logger.warning(f"No audio files found!")
         sys.exit(1)
+
+    if Path(output_path).suffix not in SUPPORTED_AUDIO_EXTENSIONS:
+        raise ValueError(f"Invalid output format {Path(output_path).suffix} provided, must be one of: {', '.join(SUPPORTED_AUDIO_EXTENSIONS)}")
 
     for feature_name in feature_set:
         if feature_name not in FEATURE_REGISTRY:
@@ -81,6 +87,7 @@ def run_concatenator(file_paths, output_path, feature_set, output_length = 10, m
     logger.debug(concatenation_path.get_stats())
 
     concatenated_audio = concatenation_path.render(output_length)
+    logger.info(f"Writing to output file: {output_path}")
     sf.write(output_path, concatenated_audio, 44100)
 
 
@@ -128,7 +135,7 @@ def run_download_backend(backend_name, words_path, output_path, feature_set, out
     run_concatenator(download_paths, output_path=output_path, feature_set=feature_set, output_length=output_length, max_snippet_length=max_snippet_length, cross_fade=cross_fade)
 
 
-def run_dir_backend(input_dir, output_path, feature_set, output_length = 10, max_snippet_length = 0.5, cross_fade = 50, extension=".mp3"):
+def run_dir_backend(input_dir, output_path, feature_set, output_length = 10, max_snippet_length = 0.5, cross_fade = 50, extension=None):
     '''
     Runs a concatenation job on a directory. The directory provided and its subdirectories are recursively
     searched and any files matching the provided extension (default mp3) will be conctatenated into a single
@@ -140,15 +147,21 @@ def run_dir_backend(input_dir, output_path, feature_set, output_length = 10, max
     :param output_length: Desired final output length in seconds
     :param max_snippet_length: The maximum length of each sample when concatenating (seconds)
     :param cross_fade: Cross fade length between samples (milliseconds)
-    :param extension: The file audio file extension type to search for
+    :param extension: The file audio file extension type to search for specifically (uses all SUPPORTED_AUDIO_EXTENSIONS if not provided)
     '''
 
     if max_snippet_length * 1000 <= cross_fade:
         logger.error(f"Snippet length ({max_snippet_length} s) must be bigger than cross fade ({cross_fade} ms)")
         sys.exit(1)
 
+    extensions = [extension] if extension in SUPPORTED_AUDIO_EXTENSIONS else SUPPORTED_AUDIO_EXTENSIONS
     audio_dir = Path(input_dir)
-    files = list(audio_dir.rglob(f"*{extension}"))
+
+    files = []
+    for extension in extensions:
+        logger.info(f"Searching recursively for files with {extension} extension")
+        files.extend(audio_dir.rglob(f"*{extension}"))
+        
     run_concatenator(files, output_path=output_path, output_length=output_length, feature_set=feature_set, max_snippet_length=max_snippet_length, cross_fade=cross_fade)
 
 
