@@ -209,7 +209,7 @@ def plot_corpus_feature_distribution(corpus: Corpus, feature_name: str, bins: in
     
     _, ax = plt.subplots(figsize=(12,6))
 
-    ax.hist(feature_values, bins=bins)
+    ax.hist(feature_values, bins=bins, edgecolor='black', alpha=0.7)
     ax.set_title(f"Distribution of '{feature_name}' in Corpus of size {len(corpus)} samples")
     ax.set_xlabel(f"{feature_name} value")
     ax.set_ylabel(f"Number of snippets")
