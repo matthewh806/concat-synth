@@ -1,4 +1,4 @@
-from concatenative.audio import audio_loader
+from concatenative.audio.audio_loader import audio_loader, find_audio_files_recursively
 from concatenative.analysis.corpus import Corpus
 from concatenative.analysis.available_features import FEATURE_REGISTRY
 from concatenative.analysis.feature_extractor import FeatureExtractor
@@ -19,7 +19,7 @@ if __name__ == "__main__":
     setup_logger(log_level=logging.DEBUG)
 
     audio_dir = Path(ROOT / "audio_downloads")
-    file_paths = list(audio_dir.rglob(f"*{'.mp3'}"))
+    file_paths = find_audio_files_recursively(audio_dir)
 
     if len(file_paths) == 0:
         logging.error(f"No audio files found!")
