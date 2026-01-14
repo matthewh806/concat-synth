@@ -6,7 +6,7 @@ import soundfile as sf
 import logging
 from pathlib import Path
 from concatenative.downloaders import FreesoundAudioDownloader, YoutubeAudioDownloader, collect_snippets_parallel
-from concatenative.audio import audio_loader
+from concatenative.audio.audio_loader import audio_loader, find_audio_files_recursively
 from concatenative.analysis import Corpus
 from concatenative.analysis.feature_extractor import FeatureExtractor
 from concatenative.analysis.available_features import FEATURE_REGISTRY
@@ -135,7 +135,7 @@ def run_download_backend(backend_name, words_path, output_path, feature_set, out
     run_concatenator(download_paths, output_path=output_path, feature_set=feature_set, output_length=output_length, max_snippet_length=max_snippet_length, cross_fade=cross_fade)
 
 
-def run_dir_backend(input_dir, output_path, feature_set, output_length = 10, max_snippet_length = 0.5, cross_fade = 50, extension=None):
+def run_dir_backend(input_dir, output_path, feature_set, output_length = 10, max_snippet_length = 0.5, cross_fade = 50, extensions = SUPPORTED_AUDIO_EXTENSIONS):
     '''
     Runs a concatenation job on a directory. The directory provided and its subdirectories are recursively
     searched and any files matching the provided extension (default mp3) will be conctatenated into a single
@@ -147,21 +147,15 @@ def run_dir_backend(input_dir, output_path, feature_set, output_length = 10, max
     :param output_length: Desired final output length in seconds
     :param max_snippet_length: The maximum length of each sample when concatenating (seconds)
     :param cross_fade: Cross fade length between samples (milliseconds)
-    :param extension: The file audio file extension type to search for specifically (uses all SUPPORTED_AUDIO_EXTENSIONS if not provided)
+    :param extensions: The file audio file extensions to search for specifically (defaults to SUPPORTED_AUDIO_EXTENSIONS if not provided)
     '''
 
     if max_snippet_length * 1000 <= cross_fade:
         logger.error(f"Snippet length ({max_snippet_length} s) must be bigger than cross fade ({cross_fade} ms)")
         sys.exit(1)
-
-    extensions = [extension] if extension in SUPPORTED_AUDIO_EXTENSIONS else SUPPORTED_AUDIO_EXTENSIONS
+    
     audio_dir = Path(input_dir)
-
-    files = []
-    for extension in extensions:
-        logger.info(f"Searching recursively for files with {extension} extension")
-        files.extend(audio_dir.rglob(f"*{extension}"))
-        
+    files = find_audio_files_recursively(audio_dir, extensions=extensions)
     run_concatenator(files, output_path=output_path, output_length=output_length, feature_set=feature_set, max_snippet_length=max_snippet_length, cross_fade=cross_fade)
 
 
