@@ -3,6 +3,7 @@ import numpy as np
 from typing import List, Optional, Callable, Dict
 from concatenative.audio.audio_snippet import AudioSnippet
 from concatenative.path.concatenation_path import ConcatenationPath
+from concatenative.analysis.corpus import Corpus
 from uuid import UUID
 import logging
 
@@ -14,6 +15,8 @@ class InteractiveCorpusPlot:
     The snippets should be normalised so that the values for each feature
     are in the range [0, 1]
     
+    #TODO Change to take Corpus as an arg instead of snippets
+
     :param snippets: A list of analysed AudioSnippets
     :param x_axis_feature: The name of the feature for the x axis
     :param y_axis_feature: The name of the feature for the y axis
@@ -174,3 +177,42 @@ class InteractiveCorpusPlot:
                 alpha=0.9, label='end')
 
         self.ax.legend()
+
+
+def plot_corpus_feature_distribution(corpus: Corpus, feature_name: str, bins: int = 30):
+    '''
+    Creates and plots a histogram for a single features distribution from a Corpus
+    
+    :param corpus: A fully analysed Corpus instance
+    :param feature_name: The name of the feature to plot (e.g. 'rms')
+    :param bins: The number of bins for the histogram
+    '''
+
+    if not corpus.snippets:
+        logger.warning("Corpus has no snippets to plot")
+        return
+
+    # Get the feature values out of the corpus
+    # TODO Make this part of the corpus
+    feature_values = []
+    for snippet in corpus.snippets:
+        if feature_name in snippet.features.keys():
+            feature_values.append(snippet.features[feature_name])
+        else:
+            logger.warning(f"Snippet {snippet.id} is missing feature '{feature_name}")
+
+            
+    if not feature_values:
+        print(f"No valid data for feature '{feature_name} to plot")
+        return
+
+    
+    _, ax = plt.subplots(figsize=(12,6))
+
+    ax.hist(feature_values, bins=bins)
+    ax.set_title(f"Distribution of '{feature_name}' in Corpus of size {len(corpus)} samples")
+    ax.set_xlabel(f"{feature_name} value")
+    ax.set_ylabel(f"Number of snippets")
+
+    plt.grid(axis='y', alpha=0.75)
+    plt.show()
