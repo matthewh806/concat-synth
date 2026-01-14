@@ -76,7 +76,7 @@ class YoutubeAudioDownloader(AudioDownloader):
             "progress_hooks": [tracker],
             "postprocessors": [{
                 "key": "FFmpegExtractAudio",
-                "preferredcodec": "mp3",
+                "preferredcodec": "wav",
             }],
             "postprocessor_args": ["-loglevel", "error"],
         }
@@ -141,7 +141,7 @@ class YoutubeAudioDownloader(AudioDownloader):
 
         paths = []
         for filename in tracker.files:
-            audio_path = Path(filename).with_suffix(".mp3")
+            audio_path = Path(filename).with_suffix(".wav")
             paths.append(audio_path)
 
         return paths
