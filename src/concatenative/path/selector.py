@@ -7,7 +7,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 @timed 
-def generate_concatenation_path(corpus: Corpus, output_length_sec: float = 10, output_sample_rate = 44100, start_snippet = None, recent_history_size = 5, cross_fade=50):
+def generate_concatenation_path(corpus: Corpus, output_length_sec: float = 10, output_sample_rate = 44100, start_snippet = None, recent_history_size = 10, cross_fade=50):
     '''
     Generates a path for the concatenator to use to create the audio collage / mosaic
 
