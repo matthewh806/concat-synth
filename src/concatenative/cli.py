@@ -3,6 +3,7 @@ import logging
 from .concatenative_synth import run_download_backend, run_dir_backend
 from concatenative.utils import setup_logger
 from concatenative.analysis.available_features import FEATURE_REGISTRY
+from concatenative.constants import SUPPORTED_AUDIO_EXTENSIONS
 
 '''
 This is a script which defines the CLI for the concatenative synthesis system.
@@ -13,7 +14,10 @@ def main():
     parent_parser = argparse.ArgumentParser(add_help=False)
     parent_parser.add_argument(
         "--out", type=str, default="output.wav",
-        help="Output WAV file path"
+        help=(
+            "Output audio file path. Must include the file extension.\n"
+            f"Available options: {', '.join(SUPPORTED_AUDIO_EXTENSIONS)}"
+        )
     )
     parent_parser.add_argument(
         "--output-length", type=float, default=10.0,
