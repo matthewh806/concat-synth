@@ -28,7 +28,16 @@ def find_audio_files_recursively(directory_path: Path, extensions: Set[str] = SU
     
     :param directory_path: Path of root directory to search
     :param extensions: Set of supported file extensions. Must include the . (e.g. {'.mp3'})
+
+    :return: List of paths to files found matching criteria provided
     '''
+
+    if not directory_path.exists():
+        raise ValueError(f"The directory path provided {directory_path} does not exist!")
+    
+    if not directory_path.is_dir():
+        raise ValueError(f"The directory path provided {directory_path} is not a directory!")
+
     for extension in extensions:
         if extension not in SUPPORTED_AUDIO_EXTENSIONS:
             raise ValueError(f"Warning, unsupported extension provided: {extension}. Must be one of {', '.join(SUPPORTED_AUDIO_EXTENSIONS)}")
