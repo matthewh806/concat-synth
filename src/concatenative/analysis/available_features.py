@@ -24,7 +24,7 @@ RMS = Feature (
 
 PITCH = Feature (
     name='pitch',
-    extractor = lambda samples, sr : np.mean(librosa.pyin(y=samples, fmin=50, fmax=5000, sr=sr))    
+    extractor = lambda samples, sr : np.nanmean(librosa.pyin(y=samples, fmin=50, fmax=5000, sr=sr)[0])    
 )
 
 SPECTRAL_CENROID = Feature (
