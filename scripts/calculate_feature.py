@@ -5,8 +5,6 @@ from concatenative.analysis.available_features import FEATURE_REGISTRY
 import logging
 import sys
 
-import librosa
-
 ROOT = Path(__file__).resolve().parents[1]
 
 FEATURE = 'pitch'
