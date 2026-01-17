@@ -1,3 +1,24 @@
+## [0.4.0] - 17-01-2026
+
+### Added
+- **Configurable Feature Extraction:** The features to be analysed are now configurable from the command line
+    * Implemented a `Feature Registry` to define available audio features (e.g. rms, pitch).
+    * Added a `--features` CLI argument allows users to specify a comma-separated list of features to use for a given run.
+- **Testing Framework (`pytest`):** Integrated the pytest framework into the project for unit testing.
+- **Corpus Feature Distribution Plots:** New visualization function (`plot_corpus_feature_distribution`) to generate histogram feature plots, 
+    * Allows for visual analysis of how features are distributed across the entire corpus.
+
+### Changed
+- **Parallel audio analyses:** The feature extraction happens across multiple different processes simultaneously, cutting down on the overall time taken
+    * Added generic `run_parallel_cpu_tasks` & `
+- **Wav audio format support:** In addition to `mp3` input formats, `wav` is also supported
+    * Adding further formats is as simple as modifying `SUPPORTED_AUDIO_EXTENSIONS` in `constants.py`
+
+### Fixed
+- **Pitch detection bug:** Librosa was failing to an overall average pitch for a signal if there were any unvoiced (`NaN`) frames. 
+    * These unvoiced frames are simply skipped over in calculating the average using `np.nanmean`
+
+
 ## [0.3.0] - 06-01-2026
 
 ### Added
