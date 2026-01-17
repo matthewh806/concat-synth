@@ -17,21 +17,41 @@ in a script and passed to the system. There's no necessity to even
 use librosa as the library.
 '''
 
+def _extract_rms(samples: np.ndarray, sr: int) -> float:
+    '''
+    Calculates the root mean square of a signal
+    '''
+    return np.mean(librosa.feature.rms(y = samples))
+
+
+def _extract_pitch(samples: np.ndarray, sr: int) -> float:
+    '''
+    Calculates the pitch of a signal using the yin algorithm
+    '''
+    return np.nanmean(librosa.pyin(y=samples, fmin=50, fmax=5000, sr=sr)[0])
+
+
+def _extract_spectral_centroid(samples: np.ndarray, sr: int) -> float:
+    '''
+    Calculates the spectral centroid of a signal
+    '''
+    return np.mean(librosa.feature.spectral_centroid(y=samples, sr=sr))
+
+
 RMS = Feature (
     name='rms',
-    extractor = lambda samples, _ : np.mean(librosa.feature.rms(y = samples))
+    extractor = _extract_rms
 )
 
 PITCH = Feature (
     name='pitch',
-    extractor = lambda samples, sr : np.nanmean(librosa.pyin(y=samples, fmin=50, fmax=5000, sr=sr)[0])    
+    extractor = _extract_pitch
 )
 
 SPECTRAL_CENROID = Feature (
     name="spectral centroid",
-    extractor = lambda samples, sr : np.mean(librosa.feature.spectral_centroid(y=samples, sr=sr))
+    extractor = _extract_spectral_centroid
 )
-
 
 FEATURE_REGISTRY = {
     'rms': RMS,
