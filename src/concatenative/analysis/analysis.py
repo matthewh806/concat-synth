@@ -1,6 +1,7 @@
 import logging
 import numpy as np
 from typing import List
+from functools import partial
 from concatenative.utils import timed
 from concatenative.audio import AudioSnippet
 from concatenative.utils import run_parallel_cpu_tasks
@@ -104,11 +105,9 @@ def analyse_snippets(snippets: List[AudioSnippet], feature_extractor: FeatureExt
 
     logger.info(f"Starting analysis of {len(snippets)} snippets")
 
-    #TODO fix the run_parallel_cpu_tasks to take arguments
-    #run_parallel_cpu_tasks(analyse_snippet, snippets, feature_extractor, task_complete_callback=task_complete_callback)
-    for snippet in snippets:
-        _, features = analyse_snippet(snippet=snippet, feature_extractor=feature_extractor)
-        snippet.features = features
-        logger.debug(f"Analysis Results for {snippet}: {log_frame_stats(features=snippet.features)}")
-
+    worker_task_function = partial(
+        analyse_snippet,
+        feature_extractor=feature_extractor
+    )
+    run_parallel_cpu_tasks(worker_task_function, snippets, task_complete_callback=task_complete_callback)
     calculate_normalised_features(snippets, feature_extractor=feature_extractor)
