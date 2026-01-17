@@ -6,8 +6,8 @@
 
    - Multiple Sources: Generate audio from a local directory of files or by downloading snippets from Freesound or YouTube.
    - Configurable Synthesis: Adjust the maximum length of audio slices and the duration of the crossfade between them.
-   - Intelligent Downloading: Uses individual words for precise searching on Freesound and randomly generated phrases for creative and unpredictable results from YouTube.
    - Parallel Processing: Downloads audio snippets in parallel for faster data collection.
+   - Visualisations: Multiple ways to plot analysis features providing different representations of the data
 
   ## Requirements
 
@@ -80,16 +80,33 @@ concat-synth download youtube --words words.txt --max-snippets 32 --out youtube_
    - `--fade <ms>`: Duration of the crossfade in milliseconds. (Default: 50)
    - `--words <path>`: Path to a text file containing words to use as search terms. (Default: words.txt)
    - `--max-snippets <int>`: The maximum number of audio snippets to download and use. (Default: 32)
+   - `--features FEATURES`: A comma separated list of features to use for analysis (Run `concat-synth --help` for available options)
    - `-v`, `--verbose`: Enable verbose logging output (DEBUG level)
 
 
   ## Visualizing the Corpus
 
-  The `InteractiveCorpusPlot` allows the whole corpus to be plotted in 3d feature space & has the ability to plot
+  The `InteractiveCorpusPlot` class allows the whole corpus to be plotted in 3d feature space & has the ability to plot
   the path through the corpus that the concatenator generates. 
-  
-  See `scripts/feature_map_plotting.py` for an example of how to set up this plotting class and display it
 
+  See `scripts/feature_map_plotting.py` for an example of how to set up this plotting class and display it
   * Interaction: Hover over any data point to instantly see detailed information about the corresponding audio snippet
   * Audio Auditioning: Click on any point to play the associated audio snippet
   * Path Trajectory: Clearly see the generated concatenation path overlaid on the corpus
+
+  `plot_corpus_feature_distribution` creates and plots a histogram for a distribution of a specific feature from a Corpus of sounds.
+
+  
+  ## Testing
+
+  The project uses `pytest` as a test suite. In order to run the tests, install the project in editable mode:
+
+  ```
+  pip install -e '.[dev]'
+  ```
+
+  To execute all of the tests simply run:
+
+  ```
+  pytest
+  ```
