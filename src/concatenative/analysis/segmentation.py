@@ -1,3 +1,4 @@
+from typing import List
 import numpy as np
 import logging
 
@@ -33,3 +34,32 @@ def strategy_fixed(samples: np.ndarray, sr: int, segment_duration_s: float = 0.2
         start += segment_size
 
     return segments
+
+
+SEGMENTATION_MAP = {
+	'slices': strategy_fixed
+}
+
+
+def segment_audio(
+	samples: np.ndarray,
+	sr: int,
+	strategy: str,
+	**strategy_kwargs
+) -> List[np.ndarray]:
+    '''
+    Segments the audio samples into subsets of the signal using the specified strategy
+     
+    :param signal samples to segment
+    :param sr sample rate of the signal
+    :param strategy name of the segmentation strategy to use
+    :param strategy_kwargs keyword arguments for segmentation methods
+
+    :return: list of numpy segment arrays
+    '''
+      
+    if strategy not in SEGMENTATION_MAP:
+          raise ValueError(f"Segmentation strategy {strategy} not valid. Use one of {','.join(SEGMENTATION_MAP.keys())}")
+    
+    segmentation_strategy = SEGMENTATION_MAP[strategy]
+    return segmentation_strategy(samples = samples, sr = sr, **strategy_kwargs)
