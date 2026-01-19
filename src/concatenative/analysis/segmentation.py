@@ -14,4 +14,22 @@ def strategy_fixed(samples: np.ndarray, sr: int, segment_duration_s: float = 0.2
     :return: list of numpy segment arrays
     '''
 
-    return []
+    if len(samples) == 0:
+        logger.warning("Empty signal passed into segmentor")
+        return []
+
+    segment_size = int(segment_duration_s * sr)
+    if segment_size > len(samples):
+        return [samples]
+    
+    num_samples = len(samples)
+    segments = []
+    start = 0
+    end = float('-inf')
+    while end < num_samples:
+        end = min(start + segment_size, num_samples)
+        segment = samples[start : end]
+        segments.append(segment)
+        start += segment_size
+
+    return segments
