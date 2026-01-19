@@ -216,3 +216,46 @@ def plot_corpus_feature_distribution(corpus: Corpus, feature_name: str, bins: in
 
     plt.grid(axis='y', alpha=0.75)
     plt.show()
+
+
+def plot_signal_segmentation(samples: np.ndarray, 
+                             segments: List[np.ndarray], 
+                             segment_colors: list[str] = ['skyblue', 'lightcoral', 'lightgreen', 'plum'],
+                             ):
+    
+    '''
+    Quick and dirty segmentation plot
+
+    # TODO
+    Needs improving a lot! 
+    It would be better to provide the segmentation times rather than the segments themselves...?
+    The segment values arent used, just the length of each. 
+    We assume segments start at 0 and are continuguous, otherwise it doesn't work.
+    '''
+    
+    if len(samples) == 0:
+        logger.warning("No signal to plot")
+        return
+    
+    if len(segments) == 0:
+        logger.warning("No segments to plot")
+        return
+    
+    _, ax = plt.subplots(figsize=(12,6))
+    ax.plot(samples)
+
+    # What about segments which don't start at 0?
+    start = 0
+    for idx, segment in enumerate(segments):
+        end = start + len(segment)
+        ax.axvspan(start, end, alpha=0.7, color = segment_colors[idx % len(segment_colors)])
+        start = end
+
+    ax.set_title(f"Segmentation of a signal")
+    ax.set_xlabel(f"Sample")
+    ax.set_ylabel(f"Amplitude")
+
+    plt.grid()
+    plt.show()
+
+
