@@ -74,8 +74,11 @@ def main():
 
     args = parser.parse_args()
     
-    if args.command:
-        setup_logger(log_level=args.loglevel)
+    if not args.command:
+        parser.print_help()
+        exit(0)
+    
+    setup_logger(log_level=args.loglevel)
 
     feature_list = args.features.split(",")
     features = []
