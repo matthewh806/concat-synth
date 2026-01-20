@@ -57,7 +57,7 @@ def main():
         help="Backend to use for downloading audio"
     )
     download_parser.add_argument(
-        "--words", type=str, default="words.txt",
+        "--words", type=str, default="data/words.txt",
         help="Path to the word list for phrase generation"
     )
 
