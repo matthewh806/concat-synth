@@ -1,5 +1,6 @@
 from typing import List
 import numpy as np
+import librosa
 import logging
 
 logger = logging.getLogger(__name__)
@@ -36,8 +37,62 @@ def strategy_fixed(samples: np.ndarray, sr: int, segment_duration_s: float = 0.2
     return segments
 
 
+def strategy_onset(samples: np.ndarray, sr: int, **kwargs) -> list[np.ndarray]:
+    '''
+    Segments audio based on detected onsets 
+    :param signal samples to segment
+    :param sr sample rate of the signal
+
+    :return: list of numpy segment arrays
+
+    TODO Add max length of onsets
+    '''
+
+    if len(samples) == 0:
+        logger.warning("Empty signal passed into segmentor")
+        return []
+    
+    segments = []
+    onset_frames = librosa.onset.onset_detect(y=samples, sr = sr, units='frames')
+    onset_samples = librosa.frames_to_samples(onset_frames)
+    
+    # Boundary goes from the first onset to the end of the last sample
+    boundaries = np.concatenate([onset_samples, [len(samples)]])
+    for i in range(len(boundaries) - 1):
+        segment = samples[boundaries[i]:boundaries[i+1]]
+        if len(segment) > 0:
+            segments.append(segment)
+
+    return segments
+
+
+def strategy_none(samples: np.ndarray, sr: int, max_duration_s: float | None = 0.2) -> list[np.ndarray]:
+    '''
+    Treat the whole signal as a single segment
+
+    :param signal samples to segment
+    :param sr sample rate of the signal
+    :param max_duration_s maximum duration of the signal to return (from 0th sample)
+    
+    :return: list of numpy segment arrays
+    '''
+
+    if len(samples) == 0:
+        logger.warning("Empty signal passed into segmentor")
+        return []
+    
+
+    if max_duration_s:
+        max_length_samples = int(max_duration_s * sr)
+        return [samples if len(samples) < max_length_samples else samples[:max_length_samples]]
+    
+    return [samples]
+
+
 SEGMENTATION_MAP = {
-	'slices': strategy_fixed
+    'slices': strategy_fixed,
+    'onsets': strategy_onset,
+    'none': strategy_none
 }
 
 
