@@ -57,7 +57,7 @@ def main():
         help="Backend to use for downloading audio"
     )
     download_parser.add_argument(
-        "--words", type=str, default="words.txt",
+        "--words", type=str, default="data/words.txt",
         help="Path to the word list for phrase generation"
     )
 
@@ -74,8 +74,11 @@ def main():
 
     args = parser.parse_args()
     
-    if args.command:
-        setup_logger(log_level=args.loglevel)
+    if not args.command:
+        parser.print_help()
+        exit(0)
+    
+    setup_logger(log_level=args.loglevel)
 
     feature_list = args.features.split(",")
     features = []
