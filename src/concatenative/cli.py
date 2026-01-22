@@ -106,7 +106,8 @@ def main():
             feature_set=features,
             max_snippets = args.max_snippets,
             max_snippet_length=args.max_slice_length,
-            cross_fade=args.fade
+            cross_fade=args.fade,
+            segmentation_strategy=args.segmentation
         )
     elif args.command == "dir":
         run_dir_backend(
@@ -115,7 +116,8 @@ def main():
             feature_set=features,
             output_length=args.output_length,
             max_snippet_length=args.max_slice_length,
-            cross_fade=args.fade
+            cross_fade=args.fade,
+            segmentation_strategy=args.segmentation
         )
     else:
         parser.print_help()
