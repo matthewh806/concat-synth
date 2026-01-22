@@ -5,7 +5,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-def strategy_fixed(samples: np.ndarray, sr: int, segment_duration_s: float = 0.2) -> list[np.ndarray]:
+def strategy_fixed(samples: np.ndarray, sr: int, segment_duration_s: float = 0.2) -> list[tuple[np.ndarray, int, int]]:
     '''
     Segment audio into fixed size slices 
 
@@ -13,7 +13,7 @@ def strategy_fixed(samples: np.ndarray, sr: int, segment_duration_s: float = 0.2
     :param sr sample rate of the signal
     :param segment_duration_s length of each segment in seconds
     
-    :return: list of numpy segment arrays
+    :return: list of numpy segment arrays (samples, start sample, end sample)
     '''
 
     if len(samples) == 0:
@@ -22,7 +22,7 @@ def strategy_fixed(samples: np.ndarray, sr: int, segment_duration_s: float = 0.2
 
     segment_size = int(segment_duration_s * sr)
     if segment_size > len(samples):
-        return [samples]
+        return [(samples, 0, len(samples))]
     
     num_samples = len(samples)
     segments = []
@@ -31,19 +31,19 @@ def strategy_fixed(samples: np.ndarray, sr: int, segment_duration_s: float = 0.2
     while end < num_samples:
         end = min(start + segment_size, num_samples)
         segment = samples[start : end]
-        segments.append(segment)
+        segments.append((segment, start, end))
         start += segment_size
 
     return segments
 
 
-def strategy_onset(samples: np.ndarray, sr: int, **kwargs) -> list[np.ndarray]:
+def strategy_onset(samples: np.ndarray, sr: int, **kwargs) -> list[tuple[np.ndarray, int, int]]:
     '''
     Segments audio based on detected onsets 
     :param signal samples to segment
     :param sr sample rate of the signal
 
-    :return: list of numpy segment arrays
+    :return: list of numpy segment arrays (samples, start sample, end sample)
 
     TODO Add max length of onsets
     '''
@@ -61,12 +61,12 @@ def strategy_onset(samples: np.ndarray, sr: int, **kwargs) -> list[np.ndarray]:
     for i in range(len(boundaries) - 1):
         segment = samples[boundaries[i]:boundaries[i+1]]
         if len(segment) > 0:
-            segments.append(segment)
+            segments.append((segment, boundaries[i], boundaries[i+1]))
 
     return segments
 
 
-def strategy_none(samples: np.ndarray, sr: int, max_duration_s: float | None = 0.2) -> list[np.ndarray]:
+def strategy_none(samples: np.ndarray, sr: int, max_duration_s: float | None = 0.2) -> list[tuple[np.ndarray, int, int]]:
     '''
     Treat the whole signal as a single segment
 
@@ -74,7 +74,7 @@ def strategy_none(samples: np.ndarray, sr: int, max_duration_s: float | None = 0
     :param sr sample rate of the signal
     :param max_duration_s maximum duration of the signal to return (from 0th sample)
     
-    :return: list of numpy segment arrays
+    :return: list of numpy segment arrays (samples, start sample, end sample)
     '''
 
     if len(samples) == 0:
@@ -84,9 +84,10 @@ def strategy_none(samples: np.ndarray, sr: int, max_duration_s: float | None = 0
 
     if max_duration_s:
         max_length_samples = int(max_duration_s * sr)
-        return [samples if len(samples) < max_length_samples else samples[:max_length_samples]]
+        slice = samples if len(samples) < max_length_samples else samples[:max_length_samples]
+        return [(slice, 0, len(slice))]
     
-    return [samples]
+    return [(samples, 0, len(samples))]
 
 
 SEGMENTATION_MAP = {
@@ -101,7 +102,7 @@ def segment_audio(
 	sr: int,
 	strategy: str,
 	**strategy_kwargs
-) -> List[np.ndarray]:
+) -> List[tuple[np.ndarray, int, int]]:
     '''
     Segments the audio samples into subsets of the signal using the specified strategy
      
@@ -110,7 +111,7 @@ def segment_audio(
     :param strategy name of the segmentation strategy to use
     :param strategy_kwargs keyword arguments for segmentation methods
 
-    :return: list of numpy segment arrays
+    :return: list of numpy segment arrays (samples, start sample, end sample)
     '''
       
     if strategy not in SEGMENTATION_MAP:
