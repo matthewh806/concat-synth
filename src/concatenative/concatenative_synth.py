@@ -51,7 +51,7 @@ def load_words(filename, limit=10):
     return words[:limit] if len(words) >= limit else words
 
 
-def run_concatenator(file_paths, output_path, feature_set, output_length = 10, max_snippet_length = 0.5, cross_fade = 50):
+def run_concatenator(file_paths, output_path, feature_set = FEATURE_REGISTRY.keys(), output_length = 10, max_snippet_length = 0.5, cross_fade = 50):
     '''
     Loads the audio files, concatenates them and outputs the audio. 
 
@@ -81,7 +81,13 @@ def run_concatenator(file_paths, output_path, feature_set, output_length = 10, m
 
     features = [FEATURE_REGISTRY[feature_name] for feature_name in feature_set]
     feature_extractor = FeatureExtractor(features=features)
-    snippets = [snip for path in file_paths if (snip := audio_loader(path, max_clip_length=max_snippet_length)) is not None]
+    snippets = [
+        snippet
+        for file_path in file_paths
+        for snippet in audio_loader(
+            file_path, max_clip_length = max_snippet_length, segmentation_stratgy='slices', segment_duration_s=1.0
+        )
+    ]
     corpus = Corpus(snippets=snippets, feature_extractor=feature_extractor)
     concatenation_path = generate_concatenation_path(corpus=corpus, output_length_sec=output_length, cross_fade=cross_fade)
     logger.debug(concatenation_path.get_stats())
@@ -91,7 +97,7 @@ def run_concatenator(file_paths, output_path, feature_set, output_length = 10, m
     sf.write(output_path, concatenated_audio, 44100)
 
 
-def run_download_backend(backend_name, words_path, output_path, feature_set, output_length = 10, max_snippets = 64, max_snippet_length = 0.5, cross_fade = 50):
+def run_download_backend(backend_name, words_path, output_path, feature_set = FEATURE_REGISTRY.keys(), output_length = 10, max_snippets = 64, max_snippet_length = 0.5, cross_fade = 50):
     '''
     Runs a download backend job. This name is a bit misleading as it downloads AND concatenates the audio
 
@@ -135,7 +141,7 @@ def run_download_backend(backend_name, words_path, output_path, feature_set, out
     run_concatenator(download_paths, output_path=output_path, feature_set=feature_set, output_length=output_length, max_snippet_length=max_snippet_length, cross_fade=cross_fade)
 
 
-def run_dir_backend(input_dir, output_path, feature_set, output_length = 10, max_snippet_length = 0.5, cross_fade = 50, extensions = SUPPORTED_AUDIO_EXTENSIONS):
+def run_dir_backend(input_dir, output_path, feature_set = FEATURE_REGISTRY.keys(), output_length = 10, max_snippet_length = 0.5, cross_fade = 50, extensions = SUPPORTED_AUDIO_EXTENSIONS):
     '''
     Runs a concatenation job on a directory. The directory provided and its subdirectories are recursively
     searched and any files matching the provided extension (default mp3) will be conctatenated into a single

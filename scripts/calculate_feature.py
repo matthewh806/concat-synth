@@ -14,15 +14,15 @@ if __name__ == "__main__":
     logger = logging.getLogger(__name__)
 
     audio_dir = Path(ROOT / "audio_downloads")
-    audio_path = audio_dir / "Aurorae Aurorae__d24c7a/yX8bYwl9rKc.wav"
+    audio_path = audio_dir / "Aurora Vortex__e8fcb7/8dRMoQJcniw.wav"
 
     if FEATURE not in FEATURE_REGISTRY:
         logger.error(f"Feature {FEATURE} is not supported!")
         sys.exit(1)
 
-    snippet = audio_loader(audio_path, sample_rate=44100, max_clip_length=0.2)
+    snippets = audio_loader(audio_path, sample_rate=44100, max_clip_length=0.2)
 
     feature = FEATURE_REGISTRY[FEATURE]
 
-    print(f"Num samples: {len(snippet.samples)}")
-    print(f"Feature result: {feature.extractor(snippet.samples, snippet.sample_rate)}")
+    print(f"Num samples: {len(snippets[0].samples)}")
+    print(f"Feature result: {feature.extractor(snippets[0].samples, snippets[0].sample_rate)}")

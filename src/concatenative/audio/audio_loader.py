@@ -1,7 +1,8 @@
 from .audio_snippet import AudioSnippet
 from concatenative.constants import SUPPORTED_AUDIO_EXTENSIONS
+from concatenative.analysis.segmentation import segment_audio
 from pathlib import Path
-from typing import Set
+from typing import Set, List
 import numpy as np
 import librosa
 import logging
@@ -50,39 +51,56 @@ def find_audio_files_recursively(directory_path: Path, extensions: Set[str] = SU
     return files
 
 
-def audio_loader(path: Path, sample_rate = 44100, metadata = {}, max_clip_length = 0.1, remove_silent = True) -> AudioSnippet:
+def audio_loader(path: Path, 
+                 sample_rate = 44100,  
+                 metadata = {}, 
+                 max_clip_length = 0.1, 
+                 remove_silent = True,
+                 segmentation_stratgy: str = "none",
+                 **strategy_args) -> List[AudioSnippet]:
     '''
     Loads audio from disk into a numpy array
     
     :param path: path to the audio file on disk
     :param sample_rate: sample rate to resample the audio to (Hz)
+    :param segmentation_stratgy the strategy to use to split up the audio file
     :param metadata: dictionary of extra params to store with the Snippet
-    :param max_clip_length: the clip will be trimmed to this length (s)
+    :param max_clip_length: each clip will be trimmed to this length (s)
     :param remove_silent: skip over silent audio slices if true
-    :return: AudioSnippet instance containing samples in a 1d numpy array
+    :param strategy_args extra keyword arguments for the segmentor
+    :return: A list of AudioSnippets generated from the signal provided
     '''
+    logger.info(f"Loading {path} with strategy {segmentation_stratgy} ...")
+
     try:
         samples, sr = librosa.load(path, sr=sample_rate)
     except Exception:
         return None
     
-    # Some backends don't always always return the exact length of audio requested
-    # So trim manually
+    # # Some backends don't always always return the exact length of audio requested
+    # # So trim manually
+
+    metadata = {
+        'filename': path.name
+    }
+
     target_len = int(max_clip_length * sample_rate)
-    if len(samples) >= target_len:
-        start = (len(samples) - target_len) // 2
-        samples = samples[start:start + target_len]
+    segments = segment_audio(samples=samples, sr=sr, strategy=segmentation_stratgy, **strategy_args)
+    snippets = []
+    for segment in segments:
+        if remove_silent and is_silent(segment):
+            continue
 
-    if is_silent(samples):
-        return None
-    
-    if len(metadata) == 0:
-        metadata = {
-            'filename': path.name
-        }
+        if len(segment) >= target_len:
+            start = (len(segment) - target_len) // 2
+            segment = segment[start:start + target_len]
 
-    return AudioSnippet(
-        samples=samples,
-        sample_rate=sr,
-        metadata=metadata
-    )
+        snippet = AudioSnippet(
+            samples=segment,
+            sample_rate=sr,
+            metadata=metadata
+        )
+
+        snippets.append(snippet)
+
+    return snippets
