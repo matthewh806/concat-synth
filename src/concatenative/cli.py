@@ -3,6 +3,7 @@ import logging
 from .concatenative_synth import run_download_backend, run_dir_backend
 from concatenative.utils import setup_logger
 from concatenative.analysis.available_features import FEATURE_REGISTRY
+from concatenative.analysis.segmentation import SEGMENTATION_MAP
 from concatenative.constants import SUPPORTED_AUDIO_EXTENSIONS
 
 '''
@@ -32,6 +33,13 @@ def main():
         help=(  
             "A comma separated list of features to use for analysis.\n"
             f"Available options: {', '.join(FEATURE_REGISTRY.keys())}"
+        )
+    )
+    parent_parser.add_argument(
+        "--segmentation", type=str, default='none',
+        help=(
+            "The strategy to use to slice up individual audio samples.\n"
+            f"Available options: {', '.join(SEGMENTATION_MAP.keys())}"
         )
     )
     parent_parser.add_argument(
