@@ -28,7 +28,7 @@ class TestFixedSegmentation():
         segments = strategy_fixed(signal, sample_rate, 2.0)
 
         assert len(segments) == 1
-        assert (segments == signal).all()
+        assert (segments[0][0] == signal).all()
 
 
     def test_basic_example(self):
@@ -48,8 +48,9 @@ class TestFixedSegmentation():
         assert len(segments) == 5
 
         for idx, segment in enumerate(segments):
-            assert len(segment) == segment_size_s * sample_rate
-            assert (segment == signal[idx * segment_size_samples : (idx + 1) * segment_size_samples]).all()
+            segment_samples = segment[0]
+            assert len(segment_samples) == segment_size_s * sample_rate
+            assert (segment_samples == signal[idx * segment_size_samples : (idx + 1) * segment_size_samples]).all()
 
 
     def test_unequal_division_example(self):
@@ -67,10 +68,10 @@ class TestFixedSegmentation():
         segments = strategy_fixed(signal, sample_rate, segment_size_s)
 
         assert len(segments) == 4
-        assert len(segments[0]) == segment_size_samples
-        assert len(segments[1]) == segment_size_samples
-        assert len(segments[2]) == segment_size_samples
-        assert len(segments[3]) == len(signal) - segment_size_samples*3
+        assert len(segments[0][0]) == segment_size_samples
+        assert len(segments[1][0]) == segment_size_samples
+        assert len(segments[2][0]) == segment_size_samples
+        assert len(segments[3][0]) == len(signal) - segment_size_samples*3
 
 
 class TestOnsetSegmentation():
@@ -130,7 +131,7 @@ class TestNoneSegmentation():
             segments = strategy_none(signal, 44100, max_duration_s=None)
 
             assert len(segments) == 1
-            assert (segments[0] == signal).all()
+            assert (segments[0][0] == signal).all()
 
         
         def test_sub_signal_returned(self):
@@ -143,8 +144,8 @@ class TestNoneSegmentation():
             segments = strategy_none(signal, sr=sample_rate, max_duration_s=0.5)
 
             assert len(segments) == 1
-            assert len(segments[0]) == int(0.5 * sample_rate)
-            assert (segments[0] == signal[:int(0.5 * sample_rate)]).all()
+            assert len(segments[0][0]) == int(0.5 * sample_rate)
+            assert (segments[0][0] == signal[:int(0.5 * sample_rate)]).all()
 
         
         def test_duration_longer_than_signal(self):
@@ -157,5 +158,5 @@ class TestNoneSegmentation():
             segments = strategy_none(signal, sr=sample_rate, max_duration_s=2.0)
 
             assert len(segments) == 1
-            assert len(segments[0]) == len(signal)
-            assert (segments[0] == signal).all()
+            assert len(segments[0][0]) == len(signal)
+            assert (segments[0][0] == signal).all()
