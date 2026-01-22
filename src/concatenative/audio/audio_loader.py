@@ -77,26 +77,27 @@ def audio_loader(path: Path,
     except Exception:
         return None
     
-    # # Some backends don't always always return the exact length of audio requested
-    # # So trim manually
-
-    metadata = {
-        'filename': path.name
-    }
-
     target_len = int(max_clip_length * sample_rate)
     segments = segment_audio(samples=samples, sr=sr, strategy=segmentation_stratgy, **strategy_args)
     snippets = []
     for segment in segments:
-        if remove_silent and is_silent(segment):
+        segment_samples = segment[0]
+
+        if remove_silent and is_silent(segment_samples):
             continue
 
-        if len(segment) >= target_len:
-            start = (len(segment) - target_len) // 2
-            segment = segment[start:start + target_len]
+        if len(segment_samples) >= target_len:
+            start = (len(segment_samples) - target_len) // 2
+            segment_samples = segment_samples[start:start + target_len]
+
+        metadata = {
+            'filename': path.name,
+            'start_sample': segment[1],
+            'end_sample': segment[2]
+        }
 
         snippet = AudioSnippet(
-            samples=segment,
+            samples=segment_samples,
             sample_rate=sr,
             metadata=metadata
         )
