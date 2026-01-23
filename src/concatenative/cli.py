@@ -43,6 +43,13 @@ def main():
         )
     )
     parent_parser.add_argument(
+        "--max-sample-slices", type=int, default=None,
+        help=(
+            "The maximum number of slices to generate via segmentation per sample.\n"
+            "Prevents the corpus growing too large"
+        )
+    )
+    parent_parser.add_argument(
         "--fade", type=int, default=50,
         help="Cross fade length (milliseconds)"
     )
@@ -106,6 +113,7 @@ def main():
             feature_set=features,
             max_snippets = args.max_snippets,
             max_snippet_length=args.max_slice_length,
+            max_slices_per_sample=args.max_sample_slices,
             cross_fade=args.fade,
             segmentation_strategy=args.segmentation
         )
@@ -116,6 +124,7 @@ def main():
             feature_set=features,
             output_length=args.output_length,
             max_snippet_length=args.max_slice_length,
+            max_slices_per_sample=args.max_sample_slices,
             cross_fade=args.fade,
             segmentation_strategy=args.segmentation
         )
