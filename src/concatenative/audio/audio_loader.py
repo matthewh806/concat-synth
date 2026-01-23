@@ -6,6 +6,7 @@ from typing import Set, List
 import numpy as np
 import librosa
 import logging
+import random
 
 logger = logging.getLogger(__name__)
 
@@ -57,6 +58,7 @@ def audio_loader(path: Path,
                  max_clip_length = 0.1, 
                  remove_silent = True,
                  segmentation_stratgy: str = "none",
+                 max_snippets: int | None = None,
                  **strategy_args) -> List[AudioSnippet]:
     '''
     Loads audio from disk into a numpy array
@@ -67,7 +69,8 @@ def audio_loader(path: Path,
     :param metadata: dictionary of extra params to store with the Snippet
     :param max_clip_length: each clip will be trimmed to this length (s)
     :param remove_silent: skip over silent audio slices if true
-    :param strategy_args extra keyword arguments for the segmentor
+    :param strategy_args: extra keyword arguments for the segmentor
+    :param max_snippets: Limit the number of snippets generated 
     :return: A list of AudioSnippets generated from the signal provided
     '''
     logger.info(f"Loading {path} with strategy {segmentation_stratgy} ...")
@@ -103,5 +106,9 @@ def audio_loader(path: Path,
         )
 
         snippets.append(snippet)
+
+    if max_snippets and len(snippets) > max_snippets:
+        logger.info(f"Subsampling randomly from {len(snippets)} to {max_snippets}")
+        snippets = random.sample(snippets, max_snippets)
 
     return snippets

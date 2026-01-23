@@ -57,6 +57,7 @@ def run_concatenator(file_paths,
                      segmentation_strategy = "none",
                      output_length = 10, 
                      max_snippet_length = 0.5, 
+                     max_slices_per_sample: int|None = None,
                      cross_fade = 50):
     '''
     Loads the audio files, concatenates them and outputs the audio. 
@@ -92,11 +93,11 @@ def run_concatenator(file_paths,
         snippet
         for file_path in file_paths
         for snippet in audio_loader(
-            file_path, max_clip_length = max_snippet_length, segmentation_stratgy=segmentation_strategy
+            file_path, max_clip_length = max_snippet_length, segmentation_stratgy=segmentation_strategy, max_snippets=max_slices_per_sample
         )
     ]
     corpus = Corpus(snippets=snippets, feature_extractor=feature_extractor)
-    concatenation_path = generate_concatenation_path(corpus=corpus, output_length_sec=output_length, cross_fade=cross_fade)
+    concatenation_path = generate_concatenation_path(corpus=corpus, output_length_sec=output_length, recent_history_size=500, cross_fade=cross_fade)
     logger.debug(concatenation_path.get_stats())
 
     concatenated_audio = concatenation_path.render(output_length)
@@ -111,7 +112,8 @@ def run_download_backend(backend_name,
                          segmentation_strategy = "none", 
                          output_length = 10, 
                          max_snippets = 64, 
-                         max_snippet_length = 0.5, 
+                         max_snippet_length = 0.5,
+                         max_slices_per_sample: int|None = None,
                          cross_fade = 50):
     '''
     Runs a download backend job. This name is a bit misleading as it downloads AND concatenates the audio
@@ -160,6 +162,7 @@ def run_download_backend(backend_name,
                      segmentation_strategy=segmentation_strategy, 
                      output_length=output_length, 
                      max_snippet_length=max_snippet_length, 
+                     max_slices_per_sample=max_slices_per_sample,
                      cross_fade=cross_fade)
 
 
@@ -169,6 +172,7 @@ def run_dir_backend(input_dir,
                     segmentation_strategy = "none",
                     output_length = 10, 
                     max_snippet_length = 0.5, 
+                    max_slices_per_sample: int|None = None,
                     cross_fade = 50, 
                     extensions = SUPPORTED_AUDIO_EXTENSIONS):
     '''
@@ -198,6 +202,7 @@ def run_dir_backend(input_dir,
                      feature_set=feature_set, 
                      segmentation_strategy=segmentation_strategy, 
                      max_snippet_length=max_snippet_length, 
+                     max_slices_per_sample=max_slices_per_sample,
                      cross_fade=cross_fade)
 
 
