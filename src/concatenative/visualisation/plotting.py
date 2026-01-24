@@ -10,6 +10,13 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+def get_feature_label(feature: Feature, normalised):
+    label =  f"{feature.name}"
+    if not normalised and feature.units:
+        label = label + f" ({feature.units})"
+
+    return label
+
 class InteractiveCorpusPlot:
     '''
     Creates an interactive 3 dimensional scatter plot by mapping features to x, y & colour
@@ -64,16 +71,9 @@ class InteractiveCorpusPlot:
             cmap='viridis'
         )
 
-        def get_feature_label(feature: Feature):
-            label =  f"{feature.name}"
-            if not normalised and feature.units:
-                label = label + f" ({feature.units})"
-
-            return label
-
-        x_label = get_feature_label(x_axis_feature)
-        y_label = get_feature_label(y_axis_feature)
-        color_label = get_feature_label(colour_feature)
+        x_label = get_feature_label(x_axis_feature, normalised)
+        y_label = get_feature_label(y_axis_feature, normalised)
+        color_label = get_feature_label(colour_feature, normalised)
 
 
         # --- Step 4: Add labels and a colour bar for clarity --- 
@@ -272,3 +272,53 @@ def plot_signal_segmentation(samples: np.ndarray,
     plt.show()
 
 
+def plot_feature_vs_time(concatenated_signal: np.ndarray, path : ConcatenationPath, feature: Feature):
+    '''
+    Creates a plot of how a specific feature changes across
+    time in a ConcatenationPath
+
+    :param concatenated_signal: The overall rendered out conctatenated signal
+    :param path: The concatenation path to plot the feature from
+    :param feature: The feature to plot
+    '''
+
+    if len(path) == 0:
+        logger.warning("Empty path provided, nothing to plot!")
+        return
+
+    # Get the sample rate out of the first snippet... assume they're all the same
+    sr = path.snippets_path[0].sample_rate
+
+    if sr == 0:
+        raise ValueError(F"Sample rate value is 0. Invalid!")
+
+    # Get the feature out of the path
+    feature_values = []
+    for snippet in path.snippets_path:
+        if feature.name not in snippet.features:
+            raise ValueError(f"Feature {feature.name} not found in snippet {snippet}")
+        
+        feature_value = snippet.features[feature.name]
+        feature_values.append(feature_value)
+
+    # Get the length of the path in seconds
+    snippet_time_map = path.get_snippet_time_map()
+    snippet_start_times = [time_map[1] for time_map in snippet_time_map]
+    
+    # Get the x-axis values for the signal
+    signal_times = np.arange(len(concatenated_signal)) / sr
+
+    _, ax = plt.subplots(2, 1, sharex=True, figsize=(12,6))
+    ax[0].plot(signal_times, concatenated_signal)
+    ax[0].set_title("Concatenated Signal")
+    ax[0].set_ylabel("Amplitude")
+    ax[0].grid()
+
+    ax[1].step(snippet_start_times, feature_values, where='post')
+    y_label = get_feature_label(feature, normalised=False)
+    ax[1].set_title(f"Feature {feature.name} in concatenated signal vs time")
+    ax[1].set_xlabel(f"Time (s)")
+    ax[1].set_ylabel(y_label)
+    ax[1].grid()
+    
+    plt.show()

@@ -4,3 +4,5 @@ __pycache__/
 *.pyc
 audio_downloads
 *.wav
+
+*.egg-info/
