@@ -44,15 +44,18 @@ if __name__ == "__main__":
         logger.error(f"No audio files found!")
         sys.exit(1)
 
+    rms = FEATURE_REGISTRY['rms']
+    spectral_centroid = FEATURE_REGISTRY['spectral centroid']
+    pitch = FEATURE_REGISTRY['pitch']
     feature_set = [
-        FEATURE_REGISTRY['rms'], FEATURE_REGISTRY['spectral centroid'], FEATURE_REGISTRY['pitch']
+        rms, spectral_centroid, pitch
     ]
 
     snippets = [
         snippet
         for file_path in file_paths
         for snippet in audio_loader(
-            file_path, max_clip_length = 0.2, segmentation_stratgy='slices', segment_duration_s=0.1
+            file_path, max_clip_length = 0.2, segmentation_stratgy='slices', segment_duration_s=0.1, max_snippets=1
         )
     ]
     corpus = Corpus(snippets, FeatureExtractor(features=feature_set))
@@ -61,5 +64,11 @@ if __name__ == "__main__":
 
     print(concatenation_path.get_stats())    
 
-    plot = InteractiveCorpusPlot(corpus.snippets, 'rms', 'spectral centroid', 'pitch', on_click_callback=play_snippet_audio_callback, path_to_draw=concatenation_path)
+    plot = InteractiveCorpusPlot(corpus.snippets, 
+                                 rms, 
+                                 spectral_centroid, 
+                                 pitch, 
+                                 normalised=False,
+                                 on_click_callback=play_snippet_audio_callback, 
+                                 path_to_draw=concatenation_path)
     plt.show()

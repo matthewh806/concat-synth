@@ -33,8 +33,8 @@ if __name__ == "__main__":
         snippet
         for file_path in file_paths
         for snippet in audio_loader(
-            file_path, max_clip_length = 0.2, segmentation_stratgy='slices', segment_duration_s=1.0
+            file_path, max_clip_length = 0.2, segmentation_stratgy='slices', segment_duration_s=1.0, max_snippets=1
         )
     ]
     corpus = Corpus(snippets, FeatureExtractor(features=feature_set))
-    plot_corpus_feature_distribution(corpus, feature_name=FEATURE, bins=100)
+    plot_corpus_feature_distribution(corpus, feature=feature_set[0], bins=100)

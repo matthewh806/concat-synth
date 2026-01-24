@@ -4,6 +4,7 @@ from typing import List, Optional, Callable, Dict
 from concatenative.audio.audio_snippet import AudioSnippet
 from concatenative.path.concatenation_path import ConcatenationPath
 from concatenative.analysis.corpus import Corpus
+from concatenative.analysis.features import Feature
 from uuid import UUID
 import logging
 
@@ -18,38 +19,38 @@ class InteractiveCorpusPlot:
     #TODO Change to take Corpus as an arg instead of snippets
 
     :param snippets: A list of analysed AudioSnippets
-    :param x_axis_feature: The name of the feature for the x axis
-    :param y_axis_feature: The name of the feature for the y axis
-    :param colour_feature: The name of the feature for the colour dimension
-    :param title: The title for the plot
+    :param x_axis_feature: The feature for the x axis
+    :param y_axis_feature: The feature for the y axis
+    :param colour_feature: The feature for the colour dimension
+    :param normalised: Plot the normalised values
     '''
         
     def __init__(
             self,
             snippets: List[AudioSnippet],
-            x_axis_feature: str,
-            y_axis_feature: str,
-            colour_feature: str,
-            title: str = "Corpus Normalised Feature Map",
+            x_axis_feature: Feature,
+            y_axis_feature: Feature,
+            colour_feature: Feature,
+            normalised = True,
             on_click_callback: Optional[Callable[[AudioSnippet], None]] = None,
             path_to_draw: Optional[ConcatenationPath] = None
     ):
         self.snippets = snippets
 
-        features_to_plot = [x_axis_feature, y_axis_feature, colour_feature]
+        features_to_plot = [x_axis_feature.name, y_axis_feature.name, colour_feature.name]
         plot_data = {feat_name: [] for feat_name in features_to_plot}
 
         for snippet in snippets:
             for feature in features_to_plot:
                 if feature in snippet.normalised_features:
-                    plot_data[feature].append(snippet.normalised_features[feature])
+                    plot_data[feature].append(snippet.normalised_features[feature] if normalised else snippet.features[feature])
                 else:
                     logger.warning(f"Feature {feature} missing from {snippet}. Excluding from plot")
 
-        self.x_data = np.array(plot_data[x_axis_feature])
-        self.y_data = np.array(plot_data[y_axis_feature])
-        self.colour_data = np.array(plot_data[colour_feature])
-        self.title = title
+        self.x_data = np.array(plot_data[x_axis_feature.name])
+        self.y_data = np.array(plot_data[y_axis_feature.name])
+        self.colour_data = np.array(plot_data[colour_feature.name])
+        self.title = "Corpus Normalised Feature Map" if normalised else "Corpus Feature Map"
         self.on_click_callback = on_click_callback
         self.path_to_draw = path_to_draw
 
@@ -63,14 +64,26 @@ class InteractiveCorpusPlot:
             cmap='viridis'
         )
 
+        def get_feature_label(feature: Feature):
+            label =  f"{feature.name}"
+            if not normalised and feature.units:
+                label = label + f" ({feature.units})"
+
+            return label
+
+        x_label = get_feature_label(x_axis_feature)
+        y_label = get_feature_label(y_axis_feature)
+        color_label = get_feature_label(colour_feature)
+
+
         # --- Step 4: Add labels and a colour bar for clarity --- 
-        self.ax.set_title(title, fontsize=16)
-        self.ax.set_xlabel(f"{x_axis_feature}", fontsize=12)
-        self.ax.set_ylabel(f"{y_axis_feature}", fontsize=12)
+        self.ax.set_title(self.title, fontsize=16)
+        self.ax.set_xlabel(x_label, fontsize=12)
+        self.ax.set_ylabel(y_label, fontsize=12)
         self.ax.grid(True, which='both', linestyle='--', linewidth=0.5)
 
         cbar = self.fig.colorbar(self.scatter, ax=self.ax)
-        cbar.set_label(f"Color: {colour_feature}", fontsize=12)
+        cbar.set_label(f"Color: {color_label}", fontsize=12)
 
         # -- Step 5: Add an annotation object to display Snippet details
         self.annot = self.ax.annotate(
@@ -179,12 +192,12 @@ class InteractiveCorpusPlot:
         self.ax.legend()
 
 
-def plot_corpus_feature_distribution(corpus: Corpus, feature_name: str, bins: int = 30):
+def plot_corpus_feature_distribution(corpus: Corpus, feature: Feature, bins: int = 30):
     '''
     Creates and plots a histogram for a single features distribution from a Corpus
     
     :param corpus: A fully analysed Corpus instance
-    :param feature_name: The name of the feature to plot (e.g. 'rms')
+    :param feature: The feature to plot
     :param bins: The number of bins for the histogram
     '''
 
@@ -195,8 +208,10 @@ def plot_corpus_feature_distribution(corpus: Corpus, feature_name: str, bins: in
     # Get the feature values out of the corpus
     # TODO Make this part of the corpus
     feature_values = []
+    feature_name = feature.name
+    feature_units = feature.units
     for snippet in corpus.snippets:
-        if feature_name in snippet.features.keys():
+        if feature.name in snippet.features.keys():
             feature_values.append(snippet.features[feature_name])
         else:
             logger.warning(f"Snippet {snippet.id} is missing feature '{feature_name}")
@@ -211,7 +226,7 @@ def plot_corpus_feature_distribution(corpus: Corpus, feature_name: str, bins: in
 
     ax.hist(feature_values, bins=bins, edgecolor='black', alpha=0.7)
     ax.set_title(f"Distribution of '{feature_name}' in Corpus of size {len(corpus)} samples")
-    ax.set_xlabel(f"{feature_name} value")
+    ax.set_xlabel(f"{feature_name} value {feature_units if feature_units else ""}")
     ax.set_ylabel(f"Number of snippets")
 
     plt.grid(axis='y', alpha=0.75)
