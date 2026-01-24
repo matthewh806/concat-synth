@@ -45,12 +45,14 @@ RMS = Feature (
 
 PITCH = Feature (
     name='pitch',
-    extractor = _extract_pitch
+    extractor = _extract_pitch,
+    units="Hz"
 )
 
 SPECTRAL_CENROID = Feature (
     name="spectral centroid",
-    extractor = _extract_spectral_centroid
+    extractor = _extract_spectral_centroid,
+    units="Hz"
 )
 
 FEATURE_REGISTRY = {

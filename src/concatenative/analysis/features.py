@@ -11,3 +11,6 @@ class Feature:
     
     # Friendly name for logging / printing
     name: str
+
+    # Feature Units
+    units: str | None = None
