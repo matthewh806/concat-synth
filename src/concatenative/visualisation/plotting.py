@@ -272,11 +272,12 @@ def plot_signal_segmentation(samples: np.ndarray,
     plt.show()
 
 
-def plot_feature_vs_time(path : ConcatenationPath, feature: Feature):
+def plot_feature_vs_time(concatenated_signal: np.ndarray, path : ConcatenationPath, feature: Feature):
     '''
     Creates a plot of how a specific feature changes across
     time in a ConcatenationPath
 
+    :param concatenated_signal: The overall rendered out conctatenated signal
     :param path: The concatenation path to plot the feature from
     :param feature: The feature to plot
     '''
@@ -309,14 +310,21 @@ def plot_feature_vs_time(path : ConcatenationPath, feature: Feature):
 
     # Get the length of the path in seconds
     snippet_start_times = [snippet_start_sample / sr for snippet_start_sample in snippet_sample_positions]
+    
+    # Get the x-axis values for the signal
+    signal_times = np.arange(len(concatenated_signal)) / sr
 
-    _, ax = plt.subplots(figsize=(12,6))
-    ax.step(snippet_start_times, feature_values, where='post')
+    _, ax = plt.subplots(2, 1, sharex=True, figsize=(12,6))
+    ax[0].plot(signal_times, concatenated_signal)
+    ax[0].set_title("Concatenated Signal")
+    ax[0].set_ylabel("Amplitude")
+    ax[0].grid()
 
+    ax[1].step(snippet_start_times, feature_values, where='post')
     y_label = get_feature_label(feature, normalised=False)
-    ax.set_title(f"Feature {feature.name} in concatenated signal vs time")
-    ax.set_xlabel(f"Time (s)")
-    ax.set_ylabel(y_label)
-
-    plt.grid()
+    ax[1].set_title(f"Feature {feature.name} in concatenated signal vs time")
+    ax[1].set_xlabel(f"Time (s)")
+    ax[1].set_ylabel(y_label)
+    ax[1].grid()
+    
     plt.show()
