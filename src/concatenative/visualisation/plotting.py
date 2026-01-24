@@ -293,11 +293,7 @@ def plot_feature_vs_time(concatenated_signal: np.ndarray, path : ConcatenationPa
         raise ValueError(F"Sample rate value is 0. Invalid!")
 
     # Get the feature out of the path
-    # TODO Should a concatenation path be able to provide all of this information itself?
     feature_values = []
-    cross_fade = int(path.cross_fade_milliseconds / 1000 * sr)
-    snippet_sample_positions = []
-    running_sample_position = 0
     for snippet in path.snippets_path:
         if feature.name not in snippet.features:
             raise ValueError(f"Feature {feature.name} not found in snippet {snippet}")
@@ -305,11 +301,9 @@ def plot_feature_vs_time(concatenated_signal: np.ndarray, path : ConcatenationPa
         feature_value = snippet.features[feature.name]
         feature_values.append(feature_value)
 
-        snippet_sample_positions.append(running_sample_position)
-        running_sample_position += (len(snippet.samples) - cross_fade)
-
     # Get the length of the path in seconds
-    snippet_start_times = [snippet_start_sample / sr for snippet_start_sample in snippet_sample_positions]
+    snippet_time_map = path.get_snippet_time_map()
+    snippet_start_times = [time_map[1] for time_map in snippet_time_map]
     
     # Get the x-axis values for the signal
     signal_times = np.arange(len(concatenated_signal)) / sr
