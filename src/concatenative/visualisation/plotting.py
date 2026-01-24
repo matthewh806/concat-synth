@@ -216,3 +216,44 @@ def plot_corpus_feature_distribution(corpus: Corpus, feature_name: str, bins: in
 
     plt.grid(axis='y', alpha=0.75)
     plt.show()
+
+
+def plot_signal_segmentation(samples: np.ndarray, 
+                             segments: tuple[np.ndarray, int, int], 
+                             segment_colors: list[str] = ['skyblue', 'lightcoral', 'lightgreen', 'plum'],
+                             ):
+    
+    '''
+    Plots the signal and the segmentation slices on top of it
+
+    :param samples the signal to plot
+    :param segments the segment data for the signal (segment samples, start sample, end sample)
+    :param segment_colors colours to cycle through when plotting the segements (to aid visualisation)
+    '''
+    
+    if len(samples) == 0:
+        logger.warning("No signal to plot")
+        return
+    
+    if len(segments) == 0:
+        logger.warning("No segments to plot")
+        return
+    
+    _, ax = plt.subplots(figsize=(12,6))
+    ax.plot(samples)
+
+    # What about segments which don't start at 0?
+    for idx, segment in enumerate(segments):
+        start = segment[1]
+        end = segment[2]
+        ax.axvspan(start, end, alpha=0.7, color = segment_colors[idx % len(segment_colors)])
+        start = end
+
+    ax.set_title(f"Segmentation of a signal")
+    ax.set_xlabel(f"Sample")
+    ax.set_ylabel(f"Amplitude")
+
+    plt.grid()
+    plt.show()
+
+

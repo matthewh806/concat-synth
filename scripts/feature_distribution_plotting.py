@@ -29,8 +29,12 @@ if __name__ == "__main__":
         sys.exit(1)
 
     feature_set = [FEATURE_REGISTRY[FEATURE]]
-
-    snippets = [snip for path in file_paths if (snip := audio_loader(path, max_clip_length=0.2)) is not None]
+    snippets = [
+        snippet
+        for file_path in file_paths
+        for snippet in audio_loader(
+            file_path, max_clip_length = 0.2, segmentation_stratgy='slices', segment_duration_s=1.0
+        )
+    ]
     corpus = Corpus(snippets, FeatureExtractor(features=feature_set))
-
-    plot_corpus_feature_distribution(corpus, feature_name=FEATURE)
+    plot_corpus_feature_distribution(corpus, feature_name=FEATURE, bins=100)

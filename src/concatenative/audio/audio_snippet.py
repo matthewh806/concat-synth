@@ -3,6 +3,12 @@ import numpy as np
 import uuid
 
 class AudioSnippet:
+    '''
+    An AudioSnippet represents a sample subset of a signal
+    The audio signal may be segmented acording to a specific rule
+    (e.g. onset detection) and the resulting segments of audio
+    made into AudioSnippet's
+    '''
     def __init__(
             self,
             samples: np.ndarray,
@@ -29,3 +35,6 @@ class AudioSnippet:
             return NotImplemented
 
         return self.id == other.id
+    
+    def __len__(self):
+        return len(self.samples)

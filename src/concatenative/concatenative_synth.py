@@ -51,7 +51,14 @@ def load_words(filename, limit=10):
     return words[:limit] if len(words) >= limit else words
 
 
-def run_concatenator(file_paths, output_path, feature_set, output_length = 10, max_snippet_length = 0.5, cross_fade = 50):
+def run_concatenator(file_paths, 
+                     output_path, 
+                     feature_set = FEATURE_REGISTRY.keys(), 
+                     segmentation_strategy = "none",
+                     output_length = 10, 
+                     max_snippet_length = 0.5, 
+                     max_slices_per_sample: int|None = None,
+                     cross_fade = 50):
     '''
     Loads the audio files, concatenates them and outputs the audio. 
 
@@ -60,6 +67,7 @@ def run_concatenator(file_paths, output_path, feature_set, output_length = 10, m
     :param file_paths list of file paths to use in the concatenation process
     :param output_path path to the concatenated output audio file
     :param feature_set list of feature names (e.g. 'rms', 'pitch') to be used in the audio analysis
+    :param segmentation_strategy the strategy for splitting up an audio sample
     :param output_length length of the output audio file
     :param max_snippet_length (s) the maximum length of each snippet
     :param cross_fade the size of the crossfade (ms) applied between each snippet in the output file
@@ -81,9 +89,15 @@ def run_concatenator(file_paths, output_path, feature_set, output_length = 10, m
 
     features = [FEATURE_REGISTRY[feature_name] for feature_name in feature_set]
     feature_extractor = FeatureExtractor(features=features)
-    snippets = [snip for path in file_paths if (snip := audio_loader(path, max_clip_length=max_snippet_length)) is not None]
+    snippets = [
+        snippet
+        for file_path in file_paths
+        for snippet in audio_loader(
+            file_path, max_clip_length = max_snippet_length, segmentation_stratgy=segmentation_strategy, max_snippets=max_slices_per_sample
+        )
+    ]
     corpus = Corpus(snippets=snippets, feature_extractor=feature_extractor)
-    concatenation_path = generate_concatenation_path(corpus=corpus, output_length_sec=output_length, cross_fade=cross_fade)
+    concatenation_path = generate_concatenation_path(corpus=corpus, output_length_sec=output_length, recent_history_size=500, cross_fade=cross_fade)
     logger.debug(concatenation_path.get_stats())
 
     concatenated_audio = concatenation_path.render(output_length)
@@ -91,7 +105,16 @@ def run_concatenator(file_paths, output_path, feature_set, output_length = 10, m
     sf.write(output_path, concatenated_audio, 44100)
 
 
-def run_download_backend(backend_name, words_path, output_path, feature_set, output_length = 10, max_snippets = 64, max_snippet_length = 0.5, cross_fade = 50):
+def run_download_backend(backend_name, 
+                         words_path, 
+                         output_path, 
+                         feature_set = FEATURE_REGISTRY.keys(),
+                         segmentation_strategy = "none", 
+                         output_length = 10, 
+                         max_snippets = 64, 
+                         max_snippet_length = 0.5,
+                         max_slices_per_sample: int|None = None,
+                         cross_fade = 50):
     '''
     Runs a download backend job. This name is a bit misleading as it downloads AND concatenates the audio
 
@@ -109,6 +132,7 @@ def run_download_backend(backend_name, words_path, output_path, feature_set, out
     :param words_path: Path to a list of words to use as search terms for downloads
     :param output_path: Path to output the concatenated audio to
     :param feature_set list of feature names (e.g. 'rms', 'pitch') to be used in the audio analysis
+    :param segmentation_strategy the strategy for splitting up an audio sample
     :param output_length: Desired final output length in seconds
     :param max_snippets: The maximum number of audio samples to download
     :param max_snippet_length: The maximum length of each sample when concatenating (seconds)
@@ -132,10 +156,25 @@ def run_download_backend(backend_name, words_path, output_path, feature_set, out
         backend = FreesoundAudioDownloader(download_directory, number_of_results=results_per_word)
 
     download_paths = collect_snippets_parallel(backend, queries)
-    run_concatenator(download_paths, output_path=output_path, feature_set=feature_set, output_length=output_length, max_snippet_length=max_snippet_length, cross_fade=cross_fade)
+    run_concatenator(download_paths, 
+                     output_path=output_path, 
+                     feature_set=feature_set, 
+                     segmentation_strategy=segmentation_strategy, 
+                     output_length=output_length, 
+                     max_snippet_length=max_snippet_length, 
+                     max_slices_per_sample=max_slices_per_sample,
+                     cross_fade=cross_fade)
 
 
-def run_dir_backend(input_dir, output_path, feature_set, output_length = 10, max_snippet_length = 0.5, cross_fade = 50, extensions = SUPPORTED_AUDIO_EXTENSIONS):
+def run_dir_backend(input_dir, 
+                    output_path, 
+                    feature_set = FEATURE_REGISTRY.keys(),
+                    segmentation_strategy = "none",
+                    output_length = 10, 
+                    max_snippet_length = 0.5, 
+                    max_slices_per_sample: int|None = None,
+                    cross_fade = 50, 
+                    extensions = SUPPORTED_AUDIO_EXTENSIONS):
     '''
     Runs a concatenation job on a directory. The directory provided and its subdirectories are recursively
     searched and any files matching the provided extension (default mp3) will be conctatenated into a single
@@ -144,6 +183,7 @@ def run_dir_backend(input_dir, output_path, feature_set, output_length = 10, max
     :param input_dir: The directory root to use as a basis to recursively load audio files from
     :param output_path: Path to output the concatenated audio to
     :param feature_set list of feature names (e.g. 'rms', 'pitch') to be used in the audio analysis
+    :param segmentation_strategy the strategy for splitting up an audio sample
     :param output_length: Desired final output length in seconds
     :param max_snippet_length: The maximum length of each sample when concatenating (seconds)
     :param cross_fade: Cross fade length between samples (milliseconds)
@@ -156,7 +196,14 @@ def run_dir_backend(input_dir, output_path, feature_set, output_length = 10, max
     
     audio_dir = Path(input_dir)
     files = find_audio_files_recursively(audio_dir, extensions=extensions)
-    run_concatenator(files, output_path=output_path, output_length=output_length, feature_set=feature_set, max_snippet_length=max_snippet_length, cross_fade=cross_fade)
+    run_concatenator(files, 
+                     output_path=output_path, 
+                     output_length=output_length, 
+                     feature_set=feature_set, 
+                     segmentation_strategy=segmentation_strategy, 
+                     max_snippet_length=max_snippet_length, 
+                     max_slices_per_sample=max_slices_per_sample,
+                     cross_fade=cross_fade)
 
 
 def main():

@@ -29,7 +29,13 @@ if __name__ == "__main__":
         FEATURE_REGISTRY['rms'], FEATURE_REGISTRY['spectral centroid'], FEATURE_REGISTRY['pitch']
     ]
 
-    snippets = [snip for path in file_paths if (snip := audio_loader(path, max_clip_length=0.2)) is not None]
+    snippets = [
+        snippet
+        for file_path in file_paths
+        for snippet in audio_loader(
+            file_path, max_clip_length = 0.2, segmentation_stratgy='slices', segment_duration_s=0.1
+        )
+    ]
     corpus = Corpus(snippets, FeatureExtractor(features=feature_set))
     target = corpus.get_random_snippet()
 
