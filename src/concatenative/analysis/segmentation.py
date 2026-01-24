@@ -37,11 +37,12 @@ def strategy_fixed(samples: np.ndarray, sr: int, segment_duration_s: float = 0.2
     return segments
 
 
-def strategy_onset(samples: np.ndarray, sr: int, **kwargs) -> list[tuple[np.ndarray, int, int]]:
+def strategy_onset(samples: np.ndarray, sr: int, max_segment_length : int | None = None) -> list[tuple[np.ndarray, int, int]]:
     '''
     Segments audio based on detected onsets 
     :param signal samples to segment
     :param sr sample rate of the signal
+    :param max_segment_length maximum length of the segment
 
     :return: list of numpy segment arrays (samples, start sample, end sample)
 
@@ -59,9 +60,17 @@ def strategy_onset(samples: np.ndarray, sr: int, **kwargs) -> list[tuple[np.ndar
     # Boundary goes from the first onset to the end of the last sample
     boundaries = np.concatenate([onset_samples, [len(samples)]])
     for i in range(len(boundaries) - 1):
-        segment = samples[boundaries[i]:boundaries[i+1]]
+        start = boundaries[i]
+        end = boundaries[i+1] 
+
+        if max_segment_length:
+            max_segment_samples = int(max_segment_length * sr)
+            duration = end - start
+            end = start + max_segment_samples if duration > max_segment_samples else end
+
+        segment = samples[start:end]
         if len(segment) > 0:
-            segments.append((segment, boundaries[i], boundaries[i+1]))
+            segments.append((segment, start, end))
 
     return segments
 
