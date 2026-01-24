@@ -61,4 +61,4 @@ def generate_concatenation_path(corpus: Corpus, output_length_sec: float = 10, o
                 f"Target length: {output_length_sec:.2f}s, "
                 f"Estimated actual output {output_length:.2f}s")
     
-    return ConcatenationPath(concatenation_path, cross_fade_seconds=cross_fade)
+    return ConcatenationPath(concatenation_path, cross_fade_milliseconds=cross_fade)

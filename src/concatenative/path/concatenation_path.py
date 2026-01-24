@@ -17,10 +17,10 @@ class ConcatenationPath:
     def __init__(
             self,
             snippets_path: List[AudioSnippet],
-            cross_fade_seconds: float 
+            cross_fade_milliseconds: float 
     ):
         self.snippets_path = snippets_path
-        self.cross_fade_seconds = cross_fade_seconds
+        self.cross_fade_milliseconds = cross_fade_milliseconds
 
 
     def render(self, output_length = 10, output_sr = 44100) -> np.ndarray:
@@ -38,7 +38,7 @@ class ConcatenationPath:
         logger.info("Rendering path...")
 
         output = self.snippets_path[0].samples.copy()
-        cross_fade_samples = int((self.cross_fade_seconds / 1000) * output_sr)
+        cross_fade_samples = int((self.cross_fade_milliseconds / 1000) * output_sr)
 
         for snippet in self.snippets_path[1:]:
             samples = snippet.samples

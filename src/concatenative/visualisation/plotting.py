@@ -295,7 +295,7 @@ def plot_feature_vs_time(concatenated_signal: np.ndarray, path : ConcatenationPa
     # Get the feature out of the path
     # TODO Should a concatenation path be able to provide all of this information itself?
     feature_values = []
-    cross_fade = int(path.cross_fade_seconds / 1000 * sr)
+    cross_fade = int(path.cross_fade_milliseconds / 1000 * sr)
     snippet_sample_positions = []
     running_sample_position = 0
     for snippet in path.snippets_path:
