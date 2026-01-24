@@ -311,7 +311,7 @@ def plot_feature_vs_time(path : ConcatenationPath, feature: Feature):
     snippet_start_times = [snippet_start_sample / sr for snippet_start_sample in snippet_sample_positions]
 
     _, ax = plt.subplots(figsize=(12,6))
-    ax.plot(snippet_start_times, feature_values)
+    ax.step(snippet_start_times, feature_values, where='post')
 
     y_label = get_feature_label(feature, normalised=False)
     ax.set_title(f"Feature {feature.name} in concatenated signal vs time")
