@@ -60,6 +60,28 @@ class ConcatenationPath:
 
         return output
     
+    
+    def get_snippet_time_map(self):
+        '''
+        Generates a snippet time map for the path. 
+        This is useful for finding out where each snippet in the map
+        starts
+
+        :return list of tuples [(snippet, start_time), ...]
+        '''
+
+        snippet_time_map = []
+        running_sample_position = 0
+
+        cross_fade = int(self.cross_fade_milliseconds / 1000 * self.snippets_path[0].sample_rate)
+
+        for snippet in self.snippets_path:
+            snippet_time_map.append((snippet, running_sample_position / snippet.sample_rate))
+            running_sample_position += (len(snippet.samples) - cross_fade)
+
+        return snippet_time_map
+    
+
     def get_stats(self):
         '''
         Retrieves some basic stats about the generated path as a string
