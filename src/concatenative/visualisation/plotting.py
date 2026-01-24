@@ -289,7 +289,7 @@ def plot_feature_vs_time(path : ConcatenationPath, feature: Feature):
     sr = path.snippets_path[0].sample_rate
 
     if sr == 0:
-        ValueError(F"Sample rate value is 0. Invalid!")
+        raise ValueError(F"Sample rate value is 0. Invalid!")
 
     # Get the feature out of the path
     # TODO Should a concatenation path be able to provide all of this information itself?
