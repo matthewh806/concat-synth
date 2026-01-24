@@ -15,7 +15,7 @@ Plots a feature value over time in a ConcatenationPath
 
 ROOT = Path(__file__).resolve().parents[1]
 
-FEATURE = 'spectral centroid'
+FEATURE = 'rms'
 
 if __name__ == "__main__":
 
@@ -43,7 +43,8 @@ if __name__ == "__main__":
     ]
 
     corpus = Corpus(snippets, FeatureExtractor(features=feature_set))
-    concatenation_path = generate_concatenation_path(corpus=corpus, output_length_sec=1)
-    plot_feature_vs_time(concatenation_path, feature_set[0])
+    concatenation_path = generate_concatenation_path(corpus=corpus, output_length_sec=30)
+    concatenated_signal = concatenation_path.render(output_length=30, output_sr=44100)
+    plot_feature_vs_time(concatenated_signal, concatenation_path, feature_set[0])
 
 
