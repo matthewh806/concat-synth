@@ -1,7 +1,7 @@
 import numpy as np
 from .helpers import generate_sine_wave, generate_click_track
-from concatenative.analysis.segmentation import strategy_fixed, strategy_onset, strategy_none
-
+from concatenative.analysis.segmentation import strategy_fixed, strategy_onset, strategy_none, segment_audio
+import pytest
 
 class TestFixedSegmentation():
 
@@ -108,6 +108,20 @@ class TestOnsetSegmentation():
 
             assert len(segments) == 3
 
+        def test_max_segment_length(self):
+            '''
+            Tests that snippets match the max length provided
+            '''
+            segment_length_s = 0.1
+            sample_rate = 44100
+            click_track = generate_click_track(1, [0.25, 0.5, 0.8], sample_rate=sample_rate)
+            segments = strategy_onset(click_track, 44100, max_segment_length=segment_length_s)
+
+            segment_length_samples = int(segment_length_s * sample_rate)
+            assert len(segments) == 3
+            for segment in segments:
+                 assert len(segment[0]) == segment_length_samples
+
 
 class TestNoneSegmentation():
 
@@ -160,3 +174,16 @@ class TestNoneSegmentation():
             assert len(segments) == 1
             assert len(segments[0][0]) == len(signal)
             assert (segments[0][0] == signal).all()
+
+class TestSegmenter():
+     
+    def test_invalid_segmentation_stratgy(self):
+        '''
+        Tests that the number of snippets generated match the max provided
+        '''
+        
+        sample_rate = 44100
+        click_track = generate_click_track(1, [0.25, 0.5, 0.8], sample_rate=sample_rate)
+
+        with pytest.raises(ValueError):
+            segment_audio(click_track, sr=sample_rate, strategy="invalid")
