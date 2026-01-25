@@ -36,6 +36,13 @@ def main():
         )
     )
     parent_parser.add_argument(
+        "--weight", type=str, default=None,
+        help=(
+            "A comma separated list of feature weight floats to use for the distance calculations\n"
+            "Should match the order and length of the features provided above\n (e.g. '0.75, 0.3, 0.2')"
+        )
+    )
+    parent_parser.add_argument(
         "--segmentation", type=str, default='none',
         help=(
             "The strategy to use to slice up individual audio samples.\n"
@@ -103,6 +110,22 @@ def main():
             raise ValueError(f"Feature {feature_name} not a known feature, available features: {', '.join(FEATURE_REGISTRY.keys())}")
         features.append(feature_name)
 
+    feature_weight_list = args.weight.split(",")
+    feature_weights = {}
+    if feature_weight_list and len(feature_weight_list) != len(features):
+        raise ValueError(f"Feature weights list ({len(feature_weight_list)} must be the same length as the feature list {len(feature_list)}")
+    
+    for idx, weight in enumerate(feature_weight_list):
+        try:
+            weight_f = float(weight.lstrip().rstrip())
+        except ValueError:
+            raise ValueError(f"Feature weight {weight} must be of type float, got {type(weight_f)}")
+        
+        if weight_f < 0.0:
+            raise ValueError(f"Feature weight must be a positive value, got {weight_f}")
+
+        feature_weights[features[idx]] = weight_f
+
 
     if args.command == "download":
         run_download_backend(
@@ -111,6 +134,7 @@ def main():
             output_length=args.output_length,
             output_path = args.out,
             feature_set=features,
+            feature_weights = feature_weights,
             max_snippets = args.max_snippets,
             max_snippet_length=args.max_slice_length,
             max_slices_per_sample=args.max_sample_slices,
@@ -122,6 +146,7 @@ def main():
             input_dir= args.input_dir,
             output_path= args.out,
             feature_set=features,
+            feature_weights = feature_weights,
             output_length=args.output_length,
             max_snippet_length=args.max_slice_length,
             max_slices_per_sample=args.max_sample_slices,
