@@ -124,6 +124,10 @@ class Corpus:
                 "Cannot build feature space for an empty corpus."
                 "Ensure corpus has snippets with valid feature vectors"
             )
+        
+        logger.info("Building feature space with weights:")
+        for feature_name, weight in self.feature_weights.items():
+            logger.info(f"{feature_name}: {weight}")
 
         self.search_tree = KDTree(np.array(feature_vectors))
 
