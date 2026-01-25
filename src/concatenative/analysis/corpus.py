@@ -1,6 +1,7 @@
 from concatenative.audio import AudioSnippet
 from .analysis import analyse_snippets
 from .feature_extractor import FeatureExtractor
+from .available_features import FEATURE_REGISTRY
 from collections import deque
 from typing import List, Dict, Optional
 import uuid
@@ -12,13 +13,15 @@ from scipy.spatial import KDTree
 logger = logging.getLogger(__name__)
 
 class Corpus:
-    def __init__(self, snippets: List[AudioSnippet], feature_extractor: FeatureExtractor):
+    def __init__(self, snippets: List[AudioSnippet], feature_extractor: FeatureExtractor, feature_weights: Dict[str, float] = {}):
 
         if not snippets:
             ValueError("Cannot initialise an empty corpus.")
 
         self.snippets = snippets
         self.feature_extractor = feature_extractor
+
+        self.feature_weights = feature_weights
 
         # The stored feature search space tree
         self.search_tree: Optional[KDTree] = None
@@ -27,6 +30,7 @@ class Corpus:
         self.index_to_snippet_map : Dict[int, AudioSnippet] = {}
 
         analyse_snippets(snippets, feature_extractor=feature_extractor)
+
         self.build_feature_space()
         
 
@@ -91,7 +95,9 @@ class Corpus:
                     logger.warning(f"Snippet {snippet.id} is missing the feature '{feature.name}' and will be excluded from the feature space")
                     return None
                 
-                feature_vector.append(value)
+                # Use the supplied weight if available
+                weight = self.feature_weights[feature.name] if feature.name in self.feature_weights else feature.default_weight
+                feature_vector.append(np.sqrt(weight) * value)
 
         return np.array(feature_vector)
     
