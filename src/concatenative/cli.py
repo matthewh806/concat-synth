@@ -110,21 +110,22 @@ def main():
             raise ValueError(f"Feature {feature_name} not a known feature, available features: {', '.join(FEATURE_REGISTRY.keys())}")
         features.append(feature_name)
 
-    feature_weight_list = args.weight.split(",")
+    feature_weight_list = args.weight.split(",") if args.weight else None
     feature_weights = {}
     if feature_weight_list and len(feature_weight_list) != len(features):
-        raise ValueError(f"Feature weights list ({len(feature_weight_list)} must be the same length as the feature list {len(feature_list)}")
+        raise ValueError(f"Feature weights list ({len(feature_weight_list)}) must be the same length as the feature list {len(feature_list)}")
     
-    for idx, weight in enumerate(feature_weight_list):
-        try:
-            weight_f = float(weight.lstrip().rstrip())
-        except ValueError:
-            raise ValueError(f"Feature weight {weight} must be of type float, got {type(weight_f)}")
-        
-        if weight_f < 0.0:
-            raise ValueError(f"Feature weight must be a positive value, got {weight_f}")
+    if feature_weight_list:
+        for idx, weight in enumerate(feature_weight_list):
+            try:
+                weight_f = float(weight.lstrip().rstrip())
+            except ValueError:
+                raise ValueError(f"Feature weight {weight} must be of type float, got {type(weight_f)}")
+            
+            if weight_f < 0.0:
+                raise ValueError(f"Feature weight must be a positive value, got {weight_f}")
 
-        feature_weights[features[idx]] = weight_f
+            feature_weights[features[idx]] = weight_f
 
 
     if args.command == "download":
