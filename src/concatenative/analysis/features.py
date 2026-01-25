@@ -12,5 +12,7 @@ class Feature:
     # Friendly name for logging / printing
     name: str
 
+    default_weight: float = 1.0
+
     # Feature Units
     units: str | None = None
