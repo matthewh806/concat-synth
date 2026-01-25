@@ -133,3 +133,73 @@ def test_setting_nearest_neighbour_num_candidates(dummy_corpus):
 
     nearest_neighbour = dummy_corpus.nearest_neighbour_search(target, exclusion_list=exclusion_list, fallback=True, num_candidates=1)
     assert(nearest_neighbour == None)
+
+
+@pytest.fixture
+def rms_weighted_corpus(dummy_feature_extractor):
+    duration = 0.1
+    sr = 44100
+
+    feature_weights = {'rms': 0.9, 'pitch':0.1, 'spectral cenroid': 0.1}
+
+    return Corpus([
+        AudioSnippet(samples = generate_sine_wave(freq=440, duration_s=duration, amp=0.7, sample_rate=sr), sample_rate=44100, metadata={'filename': 'A'}),
+        AudioSnippet(samples = generate_sine_wave(freq=450, duration_s=duration, amp=0.75, sample_rate=sr), sample_rate=44100, metadata={'filename': 'B'}),
+        AudioSnippet(samples = generate_sine_wave(freq=5000, duration_s=duration, amp=0.1, sample_rate=sr), sample_rate=44100, metadata={'filename': 'C'})
+    ], feature_extractor=dummy_feature_extractor, feature_weights=feature_weights)
+
+@pytest.fixture
+def pitch_weighted_corpus(dummy_feature_extractor):
+    duration = 0.1
+    sr = 44100
+
+    feature_weights = {'rms': 0.1, 'pitch':0.9, 'spectral cenroid': 0.1}
+
+    return Corpus([
+        AudioSnippet(samples = generate_sine_wave(freq=440, duration_s=duration, amp=0.7, sample_rate=sr), sample_rate=44100, metadata={'filename': 'A'}),
+        AudioSnippet(samples = generate_sine_wave(freq=450, duration_s=duration, amp=0.75, sample_rate=sr), sample_rate=44100, metadata={'filename': 'B'}),
+        AudioSnippet(samples = generate_sine_wave(freq=5000, duration_s=duration, amp=0.1, sample_rate=sr), sample_rate=44100, metadata={'filename': 'C'})
+    ], feature_extractor=dummy_feature_extractor, feature_weights=feature_weights)
+
+
+@pytest.fixture
+def spectral_centroid_weighted_corpus(dummy_feature_extractor):
+    duration = 0.1
+    sr = 44100
+
+    feature_weights = {'rms': 0.1, 'pitch':0.1, 'spectral cenroid': 0.9}
+
+    return Corpus([
+        AudioSnippet(samples = generate_sine_wave(freq=440, duration_s=duration, amp=0.7, sample_rate=sr), sample_rate=44100, metadata={'filename': 'A'}),
+        AudioSnippet(samples = generate_sine_wave(freq=450, duration_s=duration, amp=0.75, sample_rate=sr), sample_rate=44100, metadata={'filename': 'B'}),
+        AudioSnippet(samples = generate_sine_wave(freq=5000, duration_s=duration, amp=0.5, sample_rate=sr), sample_rate=44100, metadata={'filename': 'C'}),
+        AudioSnippet(samples = generate_sine_wave(freq=4000, duration_s=duration, amp=0.8, sample_rate=sr), sample_rate=44100, metadata={'filename': 'D'})
+    ], feature_extractor=dummy_feature_extractor, feature_weights=feature_weights)
+
+
+
+class TestWeightedDistance():
+    
+    def test_rms_weighted_corpus(self, rms_weighted_corpus):
+        target = rms_weighted_corpus.snippets[0]
+        nearest_neighbour = rms_weighted_corpus.nearest_neighbour_search(target, exclusion_list = [])
+        
+        assert nearest_neighbour != None
+        assert nearest_neighbour.metadata['filename'] == 'B'
+
+
+    def test_rms_weighted_corpus(self, pitch_weighted_corpus):
+        target = pitch_weighted_corpus.snippets[1]
+        nearest_neighbour = pitch_weighted_corpus.nearest_neighbour_search(target, exclusion_list = [])
+    
+        assert nearest_neighbour != None
+        assert nearest_neighbour.metadata['filename'] == 'A'
+
+
+    def test_rms_weighted_corpus(self, spectral_centroid_weighted_corpus):
+        target = spectral_centroid_weighted_corpus.snippets[2]
+        nearest_neighbour = spectral_centroid_weighted_corpus.nearest_neighbour_search(target, exclusion_list = [])
+    
+        assert nearest_neighbour != None
+        assert nearest_neighbour.metadata['filename'] == 'D'
+
