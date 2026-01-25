@@ -126,8 +126,12 @@ class Corpus:
             )
         
         logger.info("Building feature space with weights:")
-        for feature_name, weight in self.feature_weights.items():
-            logger.info(f"{feature_name}: {weight}")
+        if self.feature_weights:
+            for feature_name, weight in self.feature_weights.items():
+                logger.info(f"{feature_name}: {weight}")
+        else:
+            for feature in self.feature_extractor.features:
+                    logger.info(f"{feature.name}: {feature.default_weight}")
 
         self.search_tree = KDTree(np.array(feature_vectors))
 
