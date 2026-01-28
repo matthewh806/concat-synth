@@ -61,6 +61,11 @@ def main():
         help="Cross fade length (milliseconds)"
     )
     parent_parser.add_argument(
+        "--plot", 
+        action="store_true",
+        help="Generate plots for the corpus and concatenation"
+    )
+    parent_parser.add_argument(
         "-v", '--verbose',
         help="Enable verbose logging (DEBUG level).",
         action="store_const", dest="loglevel", const=logging.DEBUG,
@@ -140,7 +145,8 @@ def main():
             max_snippet_length=args.max_slice_length,
             max_slices_per_sample=args.max_sample_slices,
             cross_fade=args.fade,
-            segmentation_strategy=args.segmentation
+            segmentation_strategy=args.segmentation,
+            plots=args.plot
         )
     elif args.command == "dir":
         run_dir_backend(
@@ -152,7 +158,8 @@ def main():
             max_snippet_length=args.max_slice_length,
             max_slices_per_sample=args.max_sample_slices,
             cross_fade=args.fade,
-            segmentation_strategy=args.segmentation
+            segmentation_strategy=args.segmentation,
+            plots=args.plot
         )
     else:
         parser.print_help()
