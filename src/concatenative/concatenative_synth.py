@@ -53,6 +53,21 @@ def load_words(filename, limit=10):
 
 def create_output_plots(corpus: Corpus, feature_set, output_signal, concatenation_path, output_dir: Path):
 
+    if not output_dir.exists:
+        logger.warning("Plotting directory {output_dir} does not exist. Skipping plotting")
+        return
+
+    # Delete existing plots in the directory
+    plots_to_delete = []
+    plots_to_delete.extend(output_dir.glob('*.png'))
+    
+    for plot in plots_to_delete:
+        try:
+            plot.unlink()
+        except OSError as e:
+            logger.warning(f"Error deleting {plot}: {e}")
+    logger.info(f"Cleanup of {output_dir} complete")
+
     for feature in feature_set:
         if feature.name in FEATURE_REGISTRY:
             plot_corpus_feature_distribution(corpus, feature, output_dir=output_dir)
