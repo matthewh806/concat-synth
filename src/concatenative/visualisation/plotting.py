@@ -41,7 +41,9 @@ class InteractiveCorpusPlot:
             colour_feature: Feature,
             normalised = True,
             on_click_callback: Optional[Callable[[AudioSnippet], None]] = None,
-            path_to_draw: Optional[ConcatenationPath] = None
+            path_to_draw: Optional[ConcatenationPath] = None,
+            output_dir: Path | None = None
+            
     ):
         self.snippets = snippets
 
@@ -86,20 +88,29 @@ class InteractiveCorpusPlot:
         cbar = self.fig.colorbar(self.scatter, ax=self.ax)
         cbar.set_label(f"Color: {color_label}", fontsize=12)
 
-        # -- Step 5: Add an annotation object to display Snippet details
-        self.annot = self.ax.annotate(
-            "", xy=(0,0), xytext=(15,15), textcoords='offset points'
-        )
+        # Only add the interactive parts to the code if not saving the plt
+        if not output_dir:
+            # -- Step 5: Add an annotation object to display Snippet details
+            self.annot = self.ax.annotate(
+                "", xy=(0,0), xytext=(15,15), textcoords='offset points'
+            )
 
-        self.annot.set_visible(False)
+            self.annot.set_visible(False)
 
-        # -- Step 6: Connect event handlers
-        self.fig.canvas.mpl_connect("motion_notify_event", self.hover)
-        self.fig.canvas.mpl_connect("button_press_event", self.on_press)
+            # -- Step 6: Connect event handlers
+            self.fig.canvas.mpl_connect("motion_notify_event", self.hover)
+            self.fig.canvas.mpl_connect("button_press_event", self.on_press)
 
         # -- Step 7: Draw the audio path (if provided)
         if self.path_to_draw:
             self.draw_path()
+
+        if output_dir:
+            output_name = f"corpus_feature_map"  
+            output_path = output_dir / output_name
+            logger.info(f"Saving feature plot to {output_path}")
+            self.fig.savefig(output_path.resolve(), dpi=150, bbox_inches='tight')
+            plt.close(self.fig)
 
 
     def update_annot(self, index):
