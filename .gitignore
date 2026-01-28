@@ -7,5 +7,5 @@ audio_downloads
 
 *.egg-info/
 
- plots/*
- !plots/.gitkeep
+plots/*
+!plots/.gitkeep
