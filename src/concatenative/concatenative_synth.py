@@ -58,11 +58,11 @@ def create_output_plots(corpus: Corpus, feature_set, output_signal, concatenatio
             plot_corpus_feature_distribution(corpus, feature, output_dir=output_dir)
             plot_feature_vs_time(output_signal, concatenation_path, feature, output_dir=output_dir)
 
-    if len(feature_set) >= 3:
+    if len(feature_set) == 3:
         _ = InteractiveCorpusPlot(corpus.snippets, 
-                                  FEATURE_REGISTRY['rms'], 
-                                  FEATURE_REGISTRY['spectral centroid'], 
-                                  FEATURE_REGISTRY['pitch'], 
+                                  feature_set[0], 
+                                  feature_set[1], 
+                                  feature_set[2], 
                                   normalised=True,
                                   path_to_draw=concatenation_path,
                                   output_dir=output_dir)
