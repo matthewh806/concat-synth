@@ -29,7 +29,7 @@ def main():
         help="Maximum length of each slice (seconds)"
     )
     parent_parser.add_argument(
-        "--features", type=str, default='rms, pitch, spectral centroid',
+        "--features", type=str, default='rms, spectral centroid, pitch',
         help=(  
             "A comma separated list of features to use for analysis.\n"
             f"Available options: {', '.join(FEATURE_REGISTRY.keys())}"
