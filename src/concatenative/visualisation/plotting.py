@@ -6,6 +6,7 @@ from concatenative.path.concatenation_path import ConcatenationPath
 from concatenative.analysis.corpus import Corpus
 from concatenative.analysis.features import Feature
 from uuid import UUID
+from pathlib import Path
 import logging
 
 logger = logging.getLogger(__name__)
@@ -192,7 +193,7 @@ class InteractiveCorpusPlot:
         self.ax.legend()
 
 
-def plot_corpus_feature_distribution(corpus: Corpus, feature: Feature, bins: int = 30):
+def plot_corpus_feature_distribution(corpus: Corpus, feature: Feature, bins: int = 30, output_dir: Path | None = None):
     '''
     Creates and plots a histogram for a single features distribution from a Corpus
     
@@ -222,7 +223,7 @@ def plot_corpus_feature_distribution(corpus: Corpus, feature: Feature, bins: int
         return
 
     
-    _, ax = plt.subplots(figsize=(12,6))
+    fig, ax = plt.subplots(figsize=(12,6))
 
     ax.hist(feature_values, bins=bins, edgecolor='black', alpha=0.7)
     ax.set_title(f"Distribution of '{feature_name}' in Corpus of size {len(corpus)} samples")
@@ -230,7 +231,15 @@ def plot_corpus_feature_distribution(corpus: Corpus, feature: Feature, bins: int
     ax.set_ylabel(f"Number of snippets")
 
     plt.grid(axis='y', alpha=0.75)
-    plt.show()
+
+    if output_dir:
+        output_name = f"feature_distribution_{feature_name}"  
+        output_path = output_dir / output_name
+        logger.info(f"Saving feature plot to {output_path}")
+        fig.savefig(output_path.resolve(), dpi=150, bbox_inches='tight')
+        plt.close(fig)
+    else:
+        plt.show()
 
 
 def plot_signal_segmentation(samples: np.ndarray, 
@@ -272,7 +281,7 @@ def plot_signal_segmentation(samples: np.ndarray,
     plt.show()
 
 
-def plot_feature_vs_time(concatenated_signal: np.ndarray, path : ConcatenationPath, feature: Feature):
+def plot_feature_vs_time(concatenated_signal: np.ndarray, path : ConcatenationPath, feature: Feature, output_dir: Path | None = None):
     '''
     Creates a plot of how a specific feature changes across
     time in a ConcatenationPath
@@ -308,7 +317,7 @@ def plot_feature_vs_time(concatenated_signal: np.ndarray, path : ConcatenationPa
     # Get the x-axis values for the signal
     signal_times = np.arange(len(concatenated_signal)) / sr
 
-    _, ax = plt.subplots(2, 1, sharex=True, figsize=(12,6))
+    fig, ax = plt.subplots(2, 1, sharex=True, figsize=(12,6))
     ax[0].plot(signal_times, concatenated_signal)
     ax[0].set_title("Concatenated Signal")
     ax[0].set_ylabel("Amplitude")
@@ -321,4 +330,11 @@ def plot_feature_vs_time(concatenated_signal: np.ndarray, path : ConcatenationPa
     ax[1].set_ylabel(y_label)
     ax[1].grid()
     
-    plt.show()
+    if output_dir:
+        output_name = f"feature_vs_time_{feature.name}"  
+        output_path = output_dir / output_name
+        logger.info(f"Saving feature plot to {output_path}")
+        fig.savefig(output_path.resolve(), dpi=150, bbox_inches='tight')
+        plt.close(fig)
+    else:
+        plt.show()

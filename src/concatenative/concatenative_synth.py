@@ -12,6 +12,7 @@ from concatenative.analysis.feature_extractor import FeatureExtractor
 from concatenative.analysis.available_features import FEATURE_REGISTRY
 from concatenative.path import generate_concatenation_path
 from concatenative.constants import SUPPORTED_AUDIO_EXTENSIONS 
+from concatenative.visualisation.plotting import plot_corpus_feature_distribution, plot_feature_vs_time
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +20,7 @@ API_KEY = os.environ.get("FREESOUND_API_KEY")
 
 current_directory = Path()
 download_directory = current_directory / "audio_downloads"
-
+plots_directory = current_directory / "plots"
 
 def get_random_phrase(word_list, phrase_len = 2):
     '''
@@ -49,6 +50,13 @@ def load_words(filename, limit=10):
     
     random.shuffle(words)
     return words[:limit] if len(words) >= limit else words
+
+def create_output_plots(corpus: Corpus, feature_set, output_signal, concatenation_path, output_dir: Path):
+
+    for feature in feature_set:
+        if feature.name in FEATURE_REGISTRY:
+            plot_corpus_feature_distribution(corpus, feature, output_dir=output_dir)
+            plot_feature_vs_time(output_signal, concatenation_path, feature, output_dir=output_dir)
 
 
 def run_concatenator(file_paths, 
@@ -104,6 +112,8 @@ def run_concatenator(file_paths,
     concatenated_audio = concatenation_path.render(output_length)
     logger.info(f"Writing to output file: {output_path}")
     sf.write(output_path, concatenated_audio, 44100)
+
+    create_output_plots(corpus, features, concatenated_audio, concatenation_path, plots_directory)
 
 
 def run_download_backend(backend_name, 
