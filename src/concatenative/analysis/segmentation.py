@@ -38,7 +38,8 @@ def strategy_fixed(samples: np.ndarray, sr: int, segment_duration_s: float = 0.2
 
 
 def strategy_onset(samples: np.ndarray, 
-                   sr: int, max_segment_length : int = 0.2, 
+                   sr: int, 
+                   max_segment_length : int = 0.2, 
                    hop_length: int = 512, 
                    backtrack: bool = False, 
                    normalise: bool = False) -> list[tuple[np.ndarray, int, int]]:
@@ -47,6 +48,9 @@ def strategy_onset(samples: np.ndarray,
     :param signal samples to segment
     :param sr sample rate of the signal
     :param max_segment_length maximum length of the segment
+    :param hop_length the step size between each frame  
+    :param backtrack if True detected onsets are backtracked to nearest preceeding energy min
+    :param normalise if True normalise onset envelope to have min 0 and max 1 prior to detection
 
     :return: list of numpy segment arrays (samples, start sample, end sample)
 
