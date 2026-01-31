@@ -6,8 +6,8 @@ import numpy as np
 class Feature:
 
     # Function to extract the feature e.g. from librosa
-    # It takes (samples, sample rate) and returns the feature value(s)
-    extractor: Callable[[np.ndarray, int], Any]
+    # It takes (samples, sample rate, config dictionary) and returns the feature value(s)
+    extractor: Callable[[np.ndarray, int, dict], Any]
     
     # Friendly name for logging / printing
     name: str

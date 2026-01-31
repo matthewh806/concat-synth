@@ -13,6 +13,7 @@ from concatenative.analysis.available_features import FEATURE_REGISTRY
 from concatenative.path import generate_concatenation_path
 from concatenative.constants import SUPPORTED_AUDIO_EXTENSIONS 
 from concatenative.visualisation.plotting import InteractiveCorpusPlot, plot_corpus_feature_distribution, plot_feature_vs_time
+from concatenative.config import load_config
 
 logger = logging.getLogger(__name__)
 
@@ -112,6 +113,8 @@ def run_concatenator(file_paths,
         logger.warning(f"No audio files found!")
         sys.exit(1)
 
+    config = load_config()
+
     if Path(output_path).suffix not in SUPPORTED_AUDIO_EXTENSIONS:
         raise ValueError(f"Invalid output format {Path(output_path).suffix} provided, must be one of: {', '.join(SUPPORTED_AUDIO_EXTENSIONS)}")
 
@@ -122,7 +125,7 @@ def run_concatenator(file_paths,
     logger.info(f"Loading {len(file_paths)} files into the concatenator")
 
     features = [FEATURE_REGISTRY[feature_name] for feature_name in feature_set]
-    feature_extractor = FeatureExtractor(features=features)
+    feature_extractor = FeatureExtractor(features=features, config=config)
     snippets = [
         snippet
         for file_path in file_paths
