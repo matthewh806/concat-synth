@@ -2,6 +2,7 @@ import tomllib
 import collections.abc
 from pathlib import Path
 import logging
+from pprint import pformat
 
 logger = logging.getLogger(__name__)
 
@@ -75,5 +76,6 @@ def load_config(config_path: Path | None = None) -> dict:
         logger.info(f"Falling back to default config settings")
         final_config = deep_merge({}, DEFAULT_CONFIG)
 
+    logger.info("Config:\n%s", pformat(final_config))
     return final_config
 
