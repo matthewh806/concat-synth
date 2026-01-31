@@ -41,7 +41,13 @@ def deep_merge(dest: dict, target: dict) -> dict:
 
 
 def load_config(config_path: Path | None = None) -> dict:
+    '''
+    Loads provided configuration settings in a multistage approach
+    1. Starts with the hardcoded defaults in DEFAULT_CONFIG
+    2. Overwrites with settings with the data in the provided config 
 
+    :param config_path Path to the desired config file
+    '''
     final_config = deep_merge({}, DEFAULT_CONFIG)
 
     if not config_path:
