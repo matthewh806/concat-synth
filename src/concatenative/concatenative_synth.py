@@ -130,7 +130,11 @@ def run_concatenator(file_paths,
         snippet
         for file_path in file_paths
         for snippet in audio_loader(
-            file_path, max_clip_length = max_snippet_length, segmentation_stratgy=segmentation_strategy, max_snippets=max_slices_per_sample
+            file_path, 
+            max_clip_length = max_snippet_length, 
+            segmentation_stratgy=segmentation_strategy, 
+            max_snippets=max_slices_per_sample,
+            config=config
         )
     ]
     corpus = Corpus(snippets=snippets, feature_extractor=feature_extractor, feature_weights=feature_weights)

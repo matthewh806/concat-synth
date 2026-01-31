@@ -4,13 +4,17 @@
 # Any settings which are deleted or commented out will fall back
 # to a default found in the code
 
-[segmentation]
-max_duration_s = 0.2
+[segmentation.slices]
+segment_duration_s = 0.2
 
-[segmentation.onset]
+[segmentation.onsets]
 hop_length = 512
 backtrack = false
 normalise = false
+max_segment_length = 0.2
+
+[segmentation.none]
+segment_duration_s = 0.2
 
 [features]
 frame_length = 2048

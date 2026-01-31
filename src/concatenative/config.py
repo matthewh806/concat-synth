@@ -7,11 +7,17 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_CONFIG = {
     'segmentation': {
-        'max_duration_s': 0.2,
-        'onset': {
+        'slices': {
+            'segment_duration_s': 0.2,
+        },
+        'onsets': {
             'hop_length': 512,
             'backtrack': False,
             'normalise': False,
+            "max_segment_length": 0.2
+        },
+        'none': {
+            'segment_duration_s': 0.2
         }
     }, 
     'features': {
