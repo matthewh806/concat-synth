@@ -29,7 +29,7 @@ def main():
         help="Maximum length of each slice (seconds)"
     )
     parent_parser.add_argument(
-        "--features", type=str, default='rms, pitch, spectral centroid',
+        "--features", type=str, default='rms, spectral centroid, pitch',
         help=(  
             "A comma separated list of features to use for analysis.\n"
             f"Available options: {', '.join(FEATURE_REGISTRY.keys())}"
@@ -59,6 +59,11 @@ def main():
     parent_parser.add_argument(
         "--fade", type=int, default=50,
         help="Cross fade length (milliseconds)"
+    )
+    parent_parser.add_argument(
+        "--plot", 
+        action="store_true",
+        help="Generate plots for the corpus and concatenation"
     )
     parent_parser.add_argument(
         "-v", '--verbose',
@@ -140,7 +145,8 @@ def main():
             max_snippet_length=args.max_slice_length,
             max_slices_per_sample=args.max_sample_slices,
             cross_fade=args.fade,
-            segmentation_strategy=args.segmentation
+            segmentation_strategy=args.segmentation,
+            plots=args.plot
         )
     elif args.command == "dir":
         run_dir_backend(
@@ -152,7 +158,8 @@ def main():
             max_snippet_length=args.max_slice_length,
             max_slices_per_sample=args.max_sample_slices,
             cross_fade=args.fade,
-            segmentation_strategy=args.segmentation
+            segmentation_strategy=args.segmentation,
+            plots=args.plot
         )
     else:
         parser.print_help()

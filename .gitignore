@@ -6,3 +6,6 @@ audio_downloads
 *.wav
 
 *.egg-info/
+
+plots/*
+!plots/.gitkeep

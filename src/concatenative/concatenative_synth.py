@@ -12,6 +12,7 @@ from concatenative.analysis.feature_extractor import FeatureExtractor
 from concatenative.analysis.available_features import FEATURE_REGISTRY
 from concatenative.path import generate_concatenation_path
 from concatenative.constants import SUPPORTED_AUDIO_EXTENSIONS 
+from concatenative.visualisation.plotting import InteractiveCorpusPlot, plot_corpus_feature_distribution, plot_feature_vs_time
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +20,7 @@ API_KEY = os.environ.get("FREESOUND_API_KEY")
 
 current_directory = Path()
 download_directory = current_directory / "audio_downloads"
-
+plots_directory = current_directory / "plots"
 
 def get_random_phrase(word_list, phrase_len = 2):
     '''
@@ -50,6 +51,37 @@ def load_words(filename, limit=10):
     random.shuffle(words)
     return words[:limit] if len(words) >= limit else words
 
+def create_output_plots(corpus: Corpus, feature_set, output_signal, concatenation_path, output_dir: Path):
+
+    if not output_dir.exists:
+        logger.warning("Plotting directory {output_dir} does not exist. Skipping plotting")
+        return
+
+    # Delete existing plots in the directory
+    plots_to_delete = []
+    plots_to_delete.extend(output_dir.glob('*.png'))
+    
+    for plot in plots_to_delete:
+        try:
+            plot.unlink()
+        except OSError as e:
+            logger.warning(f"Error deleting {plot}: {e}")
+    logger.info(f"Cleanup of {output_dir} complete")
+
+    for feature in feature_set:
+        if feature.name in FEATURE_REGISTRY:
+            plot_corpus_feature_distribution(corpus, feature, output_dir=output_dir)
+            plot_feature_vs_time(output_signal, concatenation_path, feature, output_dir=output_dir)
+
+    if len(feature_set) == 3:
+        _ = InteractiveCorpusPlot(corpus.snippets, 
+                                  feature_set[0], 
+                                  feature_set[1], 
+                                  feature_set[2], 
+                                  normalised=True,
+                                  path_to_draw=concatenation_path,
+                                  output_dir=output_dir)
+
 
 def run_concatenator(file_paths, 
                      output_path, 
@@ -59,7 +91,8 @@ def run_concatenator(file_paths,
                      output_length = 10, 
                      max_snippet_length = 0.5, 
                      max_slices_per_sample: int|None = None,
-                     cross_fade = 50):
+                     cross_fade = 50, 
+                     plots = False):
     '''
     Loads the audio files, concatenates them and outputs the audio. 
 
@@ -105,6 +138,9 @@ def run_concatenator(file_paths,
     logger.info(f"Writing to output file: {output_path}")
     sf.write(output_path, concatenated_audio, 44100)
 
+    if plots:
+        create_output_plots(corpus, features, concatenated_audio, concatenation_path, plots_directory)
+
 
 def run_download_backend(backend_name, 
                          words_path, 
@@ -116,7 +152,8 @@ def run_download_backend(backend_name,
                          max_snippets = 64, 
                          max_snippet_length = 0.5,
                          max_slices_per_sample: int|None = None,
-                         cross_fade = 50):
+                         cross_fade = 50,
+                         plots = False):
     '''
     Runs a download backend job. This name is a bit misleading as it downloads AND concatenates the audio
 
@@ -161,11 +198,13 @@ def run_download_backend(backend_name,
     run_concatenator(download_paths, 
                      output_path=output_path, 
                      feature_set=feature_set, 
+                     feature_weights=feature_weights,
                      segmentation_strategy=segmentation_strategy, 
                      output_length=output_length, 
                      max_snippet_length=max_snippet_length, 
                      max_slices_per_sample=max_slices_per_sample,
-                     cross_fade=cross_fade)
+                     cross_fade=cross_fade,
+                     plots=plots)
 
 
 def run_dir_backend(input_dir, 
@@ -177,7 +216,8 @@ def run_dir_backend(input_dir,
                     max_snippet_length = 0.5, 
                     max_slices_per_sample: int|None = None,
                     cross_fade = 50, 
-                    extensions = SUPPORTED_AUDIO_EXTENSIONS):
+                    extensions = SUPPORTED_AUDIO_EXTENSIONS,
+                    plots = False):
     '''
     Runs a concatenation job on a directory. The directory provided and its subdirectories are recursively
     searched and any files matching the provided extension (default mp3) will be conctatenated into a single
@@ -207,7 +247,8 @@ def run_dir_backend(input_dir,
                      segmentation_strategy=segmentation_strategy, 
                      max_snippet_length=max_snippet_length, 
                      max_slices_per_sample=max_slices_per_sample,
-                     cross_fade=cross_fade)
+                     cross_fade=cross_fade,
+                     plots=plots)
 
 
 def main():
