@@ -1,0 +1,21 @@
+# Configuration template for the concatenative synthesiser
+# Dont edit this file directly, create a copy and provide it
+# as a CLI argument using the --config flag
+# Any settings which are deleted or commented out will fall back
+# to a default found in the code
+
+[segmentation]
+max_duration_s = 0.2
+
+[segmentation.onset]
+hop_length = 512
+backtrack = false
+normalise = false
+
+[features]
+frame_length = 2048
+hop_length = 512
+
+[features.pitch]
+fmin = 50
+fmax = 5000
