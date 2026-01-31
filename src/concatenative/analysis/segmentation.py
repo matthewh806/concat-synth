@@ -37,7 +37,11 @@ def strategy_fixed(samples: np.ndarray, sr: int, segment_duration_s: float = 0.2
     return segments
 
 
-def strategy_onset(samples: np.ndarray, sr: int, max_segment_length : int, hop_length: int, backtrack: bool, normalise: bool) -> list[tuple[np.ndarray, int, int]]:
+def strategy_onset(samples: np.ndarray, 
+                   sr: int, max_segment_length : int = 0.2, 
+                   hop_length: int = 512, 
+                   backtrack: bool = False, 
+                   normalise: bool = False) -> list[tuple[np.ndarray, int, int]]:
     '''
     Segments audio based on detected onsets 
     :param signal samples to segment
