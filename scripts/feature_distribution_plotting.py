@@ -3,6 +3,7 @@ from concatenative.audio.audio_loader import audio_loader, find_audio_files_recu
 from concatenative.analysis.corpus import Corpus
 from concatenative.analysis.available_features import FEATURE_REGISTRY
 from concatenative.analysis.feature_extractor import FeatureExtractor
+from concatenative.config import load_config
 from concatenative.visualisation.plotting import plot_corpus_feature_distribution
 from concatenative.utils.logger import setup_logger
 import logging
@@ -28,13 +29,14 @@ if __name__ == "__main__":
         logger.error(f"Feature {FEATURE} is not supported!")
         sys.exit(1)
 
+    config = load_config()
     feature_set = [FEATURE_REGISTRY[FEATURE]]
     snippets = [
         snippet
         for file_path in file_paths
         for snippet in audio_loader(
-            file_path, max_clip_length = 0.2, segmentation_stratgy='slices', segment_duration_s=1.0, max_snippets=1
+            file_path, max_clip_length = 0.2, segmentation_stratgy='slices', max_snippets=1, config=config
         )
     ]
-    corpus = Corpus(snippets, FeatureExtractor(features=feature_set))
+    corpus = Corpus(snippets, FeatureExtractor(features=feature_set, config=config))
     plot_corpus_feature_distribution(corpus, feature=feature_set[0], bins=100)
