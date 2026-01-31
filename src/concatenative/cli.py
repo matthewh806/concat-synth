@@ -25,6 +25,13 @@ def main():
         help="Length of the concatenated output file"
     )
     parent_parser.add_argument(
+        "--config", type = str, default=None,
+        help=(
+            "Provide a custom config file for tweaking under the hood settings.\n"
+            "See 'config.template.toml' in the directory root for an example"
+        )
+    )
+    parent_parser.add_argument(
         "--max-slice-length", type=float, default=0.5,
         help="Maximum length of each slice (seconds)"
     )
@@ -139,6 +146,7 @@ def main():
             words_path = args.words,
             output_length=args.output_length,
             output_path = args.out,
+            config_path = args.config if args.config else None,
             feature_set=features,
             feature_weights = feature_weights,
             max_snippets = args.max_snippets,
@@ -153,6 +161,7 @@ def main():
             input_dir= args.input_dir,
             output_path= args.out,
             feature_set=features,
+            config_path = args.config if args.config else None,
             feature_weights = feature_weights,
             output_length=args.output_length,
             max_snippet_length=args.max_slice_length,

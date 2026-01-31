@@ -1,6 +1,7 @@
 from concatenative.path.selector import generate_concatenation_path
 from concatenative.audio import AudioSnippet
 from concatenative.analysis import Corpus
+from concatenative.config import load_config
 from concatenative.analysis.features import Feature
 from concatenative.analysis.feature_extractor import FeatureExtractor
 from concatenative.analysis.available_features import _extract_pitch, _extract_rms, _extract_spectral_centroid
@@ -12,11 +13,12 @@ import librosa
 
 @pytest.fixture
 def dummy_feature_extractor():
+    config = load_config()
     return FeatureExtractor([
         Feature(name="rms", extractor = _extract_rms),
         Feature(name="pitch", extractor = _extract_pitch),
         Feature(name="spectral centroid", extractor = _extract_spectral_centroid)
-    ])
+    ], config=config)
 
 @pytest.fixture
 def dummy_corpus(dummy_feature_extractor):

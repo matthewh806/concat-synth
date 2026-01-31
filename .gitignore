@@ -9,3 +9,5 @@ audio_downloads
 
 plots/*
 !plots/.gitkeep
+
+config.toml

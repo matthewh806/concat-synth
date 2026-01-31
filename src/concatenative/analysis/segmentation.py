@@ -37,12 +37,20 @@ def strategy_fixed(samples: np.ndarray, sr: int, segment_duration_s: float = 0.2
     return segments
 
 
-def strategy_onset(samples: np.ndarray, sr: int, max_segment_length : int | None = None) -> list[tuple[np.ndarray, int, int]]:
+def strategy_onset(samples: np.ndarray, 
+                   sr: int, 
+                   max_segment_length : int = 0.2, 
+                   hop_length: int = 512, 
+                   backtrack: bool = False, 
+                   normalise: bool = False) -> list[tuple[np.ndarray, int, int]]:
     '''
     Segments audio based on detected onsets 
     :param signal samples to segment
     :param sr sample rate of the signal
     :param max_segment_length maximum length of the segment
+    :param hop_length the step size between each frame  
+    :param backtrack if True detected onsets are backtracked to nearest preceeding energy min
+    :param normalise if True normalise onset envelope to have min 0 and max 1 prior to detection
 
     :return: list of numpy segment arrays (samples, start sample, end sample)
 
@@ -54,7 +62,7 @@ def strategy_onset(samples: np.ndarray, sr: int, max_segment_length : int | None
         return []
     
     segments = []
-    onset_frames = librosa.onset.onset_detect(y=samples, sr = sr, units='frames')
+    onset_frames = librosa.onset.onset_detect(y=samples, sr = sr, units='frames', hop_length=hop_length, backtrack=backtrack, normalize=normalise)
     onset_samples = librosa.frames_to_samples(onset_frames)
     
     # Boundary goes from the first onset to the end of the last sample
@@ -75,13 +83,13 @@ def strategy_onset(samples: np.ndarray, sr: int, max_segment_length : int | None
     return segments
 
 
-def strategy_none(samples: np.ndarray, sr: int, max_duration_s: float | None = 0.2) -> list[tuple[np.ndarray, int, int]]:
+def strategy_none(samples: np.ndarray, sr: int, segment_duration_s: float | None = 0.2) -> list[tuple[np.ndarray, int, int]]:
     '''
     Treat the whole signal as a single segment
 
     :param signal samples to segment
     :param sr sample rate of the signal
-    :param max_duration_s maximum duration of the signal to return (from 0th sample)
+    :param segment_duration_s maximum duration of the signal to return (from 0th sample)
     
     :return: list of numpy segment arrays (samples, start sample, end sample)
     '''
@@ -91,8 +99,8 @@ def strategy_none(samples: np.ndarray, sr: int, max_duration_s: float | None = 0
         return []
     
 
-    if max_duration_s:
-        max_length_samples = int(max_duration_s * sr)
+    if segment_duration_s:
+        max_length_samples = int(segment_duration_s * sr)
         slice = samples if len(samples) < max_length_samples else samples[:max_length_samples]
         return [(slice, 0, len(slice))]
     
@@ -110,7 +118,7 @@ def segment_audio(
 	samples: np.ndarray,
 	sr: int,
 	strategy: str,
-	**strategy_kwargs
+    config: dict,
 ) -> List[tuple[np.ndarray, int, int]]:
     '''
     Segments the audio samples into subsets of the signal using the specified strategy
@@ -118,7 +126,7 @@ def segment_audio(
     :param signal samples to segment
     :param sr sample rate of the signal
     :param strategy name of the segmentation strategy to use
-    :param strategy_kwargs keyword arguments for segmentation methods
+    :param config: dictionary containing segmentation settings
 
     :return: list of numpy segment arrays (samples, start sample, end sample)
     '''
@@ -127,4 +135,6 @@ def segment_audio(
           raise ValueError(f"Segmentation strategy {strategy} not valid. Use one of {','.join(SEGMENTATION_MAP.keys())}")
     
     segmentation_strategy = SEGMENTATION_MAP[strategy]
-    return segmentation_strategy(samples = samples, sr = sr, **strategy_kwargs)
+    strategy_config = config.get('segmentation', {}).get(strategy, {})
+    logger.info(f"Running {strategy} segmenter with parameters: {strategy_config}")
+    return segmentation_strategy(samples = samples, sr = sr, **strategy_config)

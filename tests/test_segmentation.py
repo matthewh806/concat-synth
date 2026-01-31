@@ -1,6 +1,7 @@
 import numpy as np
 from .helpers import generate_sine_wave, generate_click_track
 from concatenative.analysis.segmentation import strategy_fixed, strategy_onset, strategy_none, segment_audio
+from concatenative.config import load_config
 import pytest
 
 class TestFixedSegmentation():
@@ -142,7 +143,7 @@ class TestNoneSegmentation():
             '''
 
             signal = generate_sine_wave(440, 1.0, 0.7, 44100)
-            segments = strategy_none(signal, 44100, max_duration_s=None)
+            segments = strategy_none(signal, 44100, segment_duration_s=None)
 
             assert len(segments) == 1
             assert (segments[0][0] == signal).all()
@@ -155,7 +156,7 @@ class TestNoneSegmentation():
 
             sample_rate = 44100
             signal = generate_sine_wave(440, 1.0, 0.7, sample_rate=sample_rate)
-            segments = strategy_none(signal, sr=sample_rate, max_duration_s=0.5)
+            segments = strategy_none(signal, sr=sample_rate, segment_duration_s=0.5)
 
             assert len(segments) == 1
             assert len(segments[0][0]) == int(0.5 * sample_rate)
@@ -169,7 +170,7 @@ class TestNoneSegmentation():
 
             sample_rate = 44100
             signal = generate_sine_wave(440, 1.0, 0.7, sample_rate=sample_rate)
-            segments = strategy_none(signal, sr=sample_rate, max_duration_s=2.0)
+            segments = strategy_none(signal, sr=sample_rate, segment_duration_s=2.0)
 
             assert len(segments) == 1
             assert len(segments[0][0]) == len(signal)
@@ -186,4 +187,4 @@ class TestSegmenter():
         click_track = generate_click_track(1, [0.25, 0.5, 0.8], sample_rate=sample_rate)
 
         with pytest.raises(ValueError):
-            segment_audio(click_track, sr=sample_rate, strategy="invalid")
+            segment_audio(click_track, sr=sample_rate, strategy="invalid", config=load_config())

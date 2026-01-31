@@ -53,23 +53,23 @@ def find_audio_files_recursively(directory_path: Path, extensions: Set[str] = SU
 
 
 def audio_loader(path: Path, 
+                 config: dict,
                  sample_rate = 44100,  
                  metadata = {}, 
                  max_clip_length = 0.1, 
                  remove_silent = True,
                  segmentation_stratgy: str = "none",
-                 max_snippets: int | None = None,
-                 **strategy_args) -> List[AudioSnippet]:
+                 max_snippets: int | None = None) -> List[AudioSnippet]:
     '''
     Loads audio from disk into a numpy array
     
     :param path: path to the audio file on disk
+    :param config: dictionary containing segmentation settings
     :param sample_rate: sample rate to resample the audio to (Hz)
     :param segmentation_stratgy the strategy to use to split up the audio file
     :param metadata: dictionary of extra params to store with the Snippet
     :param max_clip_length: each clip will be trimmed to this length (s)
     :param remove_silent: skip over silent audio slices if true
-    :param strategy_args: extra keyword arguments for the segmentor
     :param max_snippets: Limit the number of snippets generated 
     :return: A list of AudioSnippets generated from the signal provided
     '''
@@ -81,7 +81,7 @@ def audio_loader(path: Path,
         return None
     
     target_len = int(max_clip_length * sample_rate)
-    segments = segment_audio(samples=samples, sr=sr, strategy=segmentation_stratgy, **strategy_args)
+    segments = segment_audio(samples=samples, sr=sr, strategy=segmentation_stratgy, config=config)
     snippets = []
     for segment in segments:
         segment_samples = segment[0]

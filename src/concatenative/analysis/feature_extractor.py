@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 class FeatureExtractor(Sequence):
 
-    def __init__(self, features: List[Feature]):
+    def __init__(self, features: List[Feature], config: dict):
         '''
         Initialises the FeatureExtractor instance with a list of 
         features to be extracted from audio samples
@@ -18,6 +18,7 @@ class FeatureExtractor(Sequence):
             raise ValueError("Constructring FeatureExtractor with empty feature list")
 
         self.features = features
+        self.config = config
 
     def __iter__(self):
         return iter(self.features)
@@ -53,7 +54,7 @@ class FeatureExtractor(Sequence):
         features = {}
         for feature in self.features:
             try:
-                feature_value = feature.extractor(samples, sample_rate)
+                feature_value = feature.extractor(samples, sample_rate, self.config)
 
                 if not isinstance(feature_value, np.floating):
                     raise TypeError(f"The extracted feature value {feature_value} is expected to be a numpy float not a {type(feature_value)}")

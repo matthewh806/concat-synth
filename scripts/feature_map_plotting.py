@@ -5,6 +5,7 @@ from concatenative.audio.audio_loader import audio_loader, find_audio_files_recu
 from concatenative.analysis.corpus import Corpus
 from concatenative.analysis.available_features import FEATURE_REGISTRY
 from concatenative.analysis.feature_extractor import FeatureExtractor
+from concatenative.config import load_config
 from concatenative.path.selector import generate_concatenation_path
 from concatenative.visualisation.plotting import InteractiveCorpusPlot
 from concatenative.utils.logger import setup_logger
@@ -51,14 +52,15 @@ if __name__ == "__main__":
         rms, spectral_centroid, pitch
     ]
 
+    config = load_config()
     snippets = [
         snippet
         for file_path in file_paths
         for snippet in audio_loader(
-            file_path, max_clip_length = 0.2, segmentation_stratgy='slices', segment_duration_s=0.1, max_snippets=1
+            file_path, max_clip_length = 0.2, segmentation_stratgy='slices', max_snippets=1, config=config
         )
     ]
-    corpus = Corpus(snippets, FeatureExtractor(features=feature_set))
+    corpus = Corpus(snippets, FeatureExtractor(features=feature_set, config=config))
     print(f"Number of duplicate snippets: {corpus.get_number_of_duplicates()}")
     concatenation_path = generate_concatenation_path(corpus=corpus, output_length_sec=20)
 

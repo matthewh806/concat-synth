@@ -17,25 +17,37 @@ in a script and passed to the system. There's no necessity to even
 use librosa as the library.
 '''
 
-def _extract_rms(samples: np.ndarray, sr: int) -> float:
+def _extract_rms(samples: np.ndarray, sr: int, config: dict) -> float:
     '''
     Calculates the root mean square of a signal
     '''
-    return np.mean(librosa.feature.rms(y = samples))
+    feature_config = config['features']
+    return np.mean(librosa.feature.rms(y = samples, 
+                                       frame_length=feature_config['frame_length'], 
+                                       hop_length=feature_config['hop_length']))
 
 
-def _extract_pitch(samples: np.ndarray, sr: int) -> float:
+def _extract_pitch(samples: np.ndarray, sr: int, config: dict) -> float:
     '''
     Calculates the pitch of a signal using the yin algorithm
     '''
-    return np.nanmean(librosa.pyin(y=samples, fmin=50, fmax=5000, sr=sr)[0])
+    feature_config = config['features']
+    return np.nanmean(librosa.pyin(y=samples,
+                                   frame_length=feature_config['frame_length'],
+                                   hop_length=feature_config['hop_length'],
+                                   fmin=feature_config['pitch']['fmin'], 
+                                   fmax=feature_config['pitch']['fmax'], 
+                                   sr=sr)[0])
 
 
-def _extract_spectral_centroid(samples: np.ndarray, sr: int) -> float:
+def _extract_spectral_centroid(samples: np.ndarray, sr: int, config: dict) -> float:
     '''
     Calculates the spectral centroid of a signal
     '''
-    return np.mean(librosa.feature.spectral_centroid(y=samples, sr=sr))
+    feature_config = config['features']
+    return np.mean(librosa.feature.spectral_centroid(y=samples, 
+                                                     sr=sr,
+                                                     hop_length=feature_config['hop_length']))
 
 
 RMS = Feature (

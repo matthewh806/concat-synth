@@ -2,6 +2,7 @@ from concatenative.audio.audio_loader import audio_loader, find_audio_files_recu
 from concatenative.analysis.corpus import Corpus
 from concatenative.analysis.available_features import FEATURE_REGISTRY
 from concatenative.analysis.feature_extractor import FeatureExtractor
+from concatenative.config import load_config
 from concatenative.utils.logger import setup_logger
 from pathlib import Path
 import sys
@@ -29,14 +30,15 @@ if __name__ == "__main__":
         FEATURE_REGISTRY['rms'], FEATURE_REGISTRY['spectral centroid'], FEATURE_REGISTRY['pitch']
     ]
 
+    config = load_config()
     snippets = [
         snippet
         for file_path in file_paths
         for snippet in audio_loader(
-            file_path, max_clip_length = 0.2, segmentation_stratgy='slices', segment_duration_s=0.1
+            file_path, max_clip_length = 0.2, segmentation_stratgy='slices', max_snippets=1, config = config
         )
     ]
-    corpus = Corpus(snippets, FeatureExtractor(features=feature_set))
+    corpus = Corpus(snippets, FeatureExtractor(features=feature_set, config = config))
     target = corpus.get_random_snippet()
 
     logging.info(f"Finding nearest neighbour for target: {target}")
