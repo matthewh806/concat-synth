@@ -5,6 +5,10 @@
   ## Features
 
    - Multiple Sources: Generate audio from a local directory of files or by downloading snippets from Freesound or YouTube.
+   - Advanced Audio Segmentation: Deconstructs source audio into musically meaningful snippets.
+    - Onset Detection: Segments audio into individual events like drum hits or notes (onset detection).
+    - Fixed-Duration: Chops audio into rhythmically consistent chunks.
+    - Whole-File: Uses an entire audio file as a single snippet.
    - Configurable Synthesis: Adjust the maximum length of audio slices and the duration of the crossfade between them.
    - Parallel Processing: Downloads audio snippets in parallel for faster data collection.
    - Visualisations: Multiple ways to plot analysis features providing different representations of the data
@@ -13,6 +17,7 @@
 
    - Python 3.9+
    - A [Freesound](https://freesound.org/home/app_new/) API Key (only required for the freesound backend).
+   - `ffmpeg` must be installed and available in your system's PATH (for audio file downloading via youtube).
 
   ## Installation
 
@@ -45,9 +50,13 @@
 
   You can add this line to your shell's startup file (e.g., .zshrc or .bash_profile) to make it permanent.
 
+  Fine grain control of under the hood parameters (not exposed in the CLI) can be achieved by duplicating `config.template.toml`
+  and providing it as input to the CLI
+
   ## Usage
 
   The primary entry point is the `concat-synth` command, which has two main sub-commands: `dir` and `download`.
+
 
   ### Generate from a local directory
 
@@ -75,26 +84,33 @@ concat-synth download youtube --words words.txt --max-snippets 32 --out youtube_
   Command-line Options
 
    - `--out <path>`: Path to save the output .wav file. (Default: output.wav)
-   - `output-length <seconds>`: The desired output length of the final audio file (Default: 10)
+   - `--output-length <seconds>`: The desired output length of the final audio file (Default: 10)
+   - `--config <path>`: Path to a custom `.toml` configuration file
    - `--max-slice-length` <seconds>: Maximum length of each audio snippet in seconds. (Default: 0.5)
    - `--fade <ms>`: Duration of the crossfade in milliseconds. (Default: 50)
    - `--words <path>`: Path to a text file containing words to use as search terms. (Default: words.txt)
    - `--max-snippets <int>`: The maximum number of audio snippets to download and use. (Default: 32)
+   - `--max-sample-slices <int>`: The maximum number of slices to generate via segmentation per sample. Prevents the corpus growing too large
    - `--features FEATURES`: A comma separated list of features to use for analysis (Run `concat-synth --help` for available options)
+   - `--weight WEIGHT`: A comma separated list of feature weight floats to use for the distance calculations
+   - `--plot`: If set, generates and saves a suite of diagnostic plots to the `plots/` directory
    - `-v`, `--verbose`: Enable verbose logging output (DEBUG level)
 
 
   ## Visualizing the Corpus
 
-  The `InteractiveCorpusPlot` class allows the whole corpus to be plotted in 3d feature space & has the ability to plot
+  - `InteractiveCorpusPlot` allows the whole corpus to be plotted in 3d feature space & has the ability to plot
   the path through the corpus that the concatenator generates. 
 
-  See `scripts/feature_map_plotting.py` for an example of how to set up this plotting class and display it
-  * Interaction: Hover over any data point to instantly see detailed information about the corresponding audio snippet
-  * Audio Auditioning: Click on any point to play the associated audio snippet
-  * Path Trajectory: Clearly see the generated concatenation path overlaid on the corpus
+    - See `scripts/feature_map_plotting.py` for an example of how to set up this plotting class and display it
+    * Interaction: Hover over any data point to instantly see detailed information about the corresponding audio snippet
+    * Audio Auditioning: Click on any point to play the associated audio snippet
+    * Path Trajectory: Clearly see the generated concatenation path overlaid on the corpus
 
-  `plot_corpus_feature_distribution` creates and plots a histogram for a distribution of a specific feature from a Corpus of sounds.
+
+  - `plot_corpus_feature_distribution` creates and plots a histogram for a distribution of a specific feature from a Corpus of sounds.
+  - `plot_signal_segmentation` creates a plot of an input signal and the segmentation slices overlaid on top of it
+  - `plot_feature_vs_time` Creates a plot of how a specific feature changes over time in a `ConcatenationPath`
 
   
   ## Testing

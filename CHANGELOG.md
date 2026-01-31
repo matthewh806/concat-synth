@@ -1,3 +1,19 @@
+## [0.5.0] - 31-01-2026
+
+### Added
+- **Configurations file:** This allows finer grain control of under the hood settings not exposed by the CLI
+- **Units to the Feature class:** This helps with plotting the values to get more context
+- **Feature Weights:** Customisable weights per audio feature allow much more precise tuning of the nearest neighbour calculation
+    * Configurable from the command line
+- **Visualisation of feature trajectory:** Allows tracking of a feature in time 
+- **Audio Segmentation:** The input audio is segmented into individual smaller snippets, instead of a single fixed length slice
+    * There are three strategies for splitting up the audio: `onsets`, `slices` (fixed size), `none` (uses the whole file) 
+    * The strategy and its parameters are configurable from the command line
+- **Automatic plotting:** Using the `--plot` CLI flag will optionally generate and save all of the visualisation plots available for the last run
+
+### Fixed
+- **Incorrect `ConcatenationPath` member name:** `cross_fade_seconds` was renamed to `cross_fade_milliseconds`
+
 ## [0.4.0] - 17-01-2026
 
 ### Added
