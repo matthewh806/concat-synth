@@ -1,5 +1,6 @@
 from concatenative.analysis.features import Feature
 from concatenative.analysis.feature_extractor import FeatureExtractor
+from concatenative.config import load_config
 import pytest
 import librosa
 import numpy as np
@@ -7,11 +8,12 @@ from .helpers import generate_sine_wave
 
 @pytest.fixture
 def dummy_feature_extractor():
+    config = load_config()
     return FeatureExtractor([
-        Feature(name="rms", extractor= lambda samples, _ : np.mean(librosa.feature.rms(y = samples))),
-        Feature(name="pitch", extractor = lambda samples, sr : np.mean(librosa.pyin(y=samples, fmin=50, fmax=5000, sr=sr))),
-        Feature(name="spectral centroid", extractor = lambda samples, sr : np.mean(librosa.feature.spectral_centroid(y=samples, sr=sr)))
-    ])
+        Feature(name="rms", extractor= lambda samples, _, config: np.mean(librosa.feature.rms(y = samples))),
+        Feature(name="pitch", extractor = lambda samples, sr, config : np.mean(librosa.pyin(y=samples, fmin=50, fmax=5000, sr=sr))),
+        Feature(name="spectral centroid", extractor = lambda samples, sr, config : np.mean(librosa.feature.spectral_centroid(y=samples, sr=sr)))
+    ], config=config)
 
 @pytest.fixture
 def dummy_signal():
@@ -37,7 +39,8 @@ def test_extracted_features_match_expected(dummy_feature_extractor, dummy_signal
 def test_constructing_with_empty_feature_set():
 
     with pytest.raises(ValueError):
-        feature_extractor = FeatureExtractor([])
+        config = load_config()
+        feature_extractor = FeatureExtractor([], config=config)
 
 def test_extractor_raises_for_wrong_extractor_value_type(dummy_signal):
     feature_extractor = FeatureExtractor([Feature(name="rms", extractor = lambda : 'invalid')])
@@ -47,7 +50,10 @@ def test_extractor_raises_for_wrong_extractor_value_type(dummy_signal):
 
 
 def test_extractor_raises_for_wrong_extractor_value_type(dummy_signal):
-    feature_extractor = FeatureExtractor([Feature(name="pitch", extractor = lambda samples, sr : np.mean(librosa.pyin(y=samples, sr=sr)))])
+    config = load_config()
+    feature_extractor = FeatureExtractor([
+        Feature(name="pitch", extractor = lambda samples, sr, config : np.mean(librosa.pyin(y=samples, sr=sr)))], 
+        config=config)
 
     with pytest.raises(Exception):
         feature_extractor.extract(dummy_signal, 44100)

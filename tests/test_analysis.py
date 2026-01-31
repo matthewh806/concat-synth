@@ -2,6 +2,7 @@ from concatenative.audio import AudioSnippet
 from concatenative.analysis import analyse_snippet, analyse_snippets, calculate_normalised_features
 from concatenative.analysis.feature_extractor import FeatureExtractor
 from concatenative.analysis.features import Feature
+from concatenative.config import load_config
 from .helpers import generate_sine_wave, generate_white_noise
 
 import pytest
@@ -10,11 +11,12 @@ import librosa
 
 @pytest.fixture
 def dummy_feature_extractor():
+    config = load_config()
     return FeatureExtractor([
-        Feature(name="rms", extractor= lambda samples, _ : np.mean(librosa.feature.rms(y = samples))),
-        Feature(name="pitch", extractor = lambda samples, sr : np.mean(librosa.pyin(y=samples, fmin=50, fmax=5000, sr=sr))),
-        Feature(name="spectral centroid", extractor = lambda samples, sr : np.mean(librosa.feature.spectral_centroid(y=samples, sr=sr)))
-    ])
+        Feature(name="rms", extractor = lambda samples, config, _ : np.mean(librosa.feature.rms(y = samples))),
+        Feature(name="pitch", extractor = lambda samples, sr, config : np.mean(librosa.pyin(y=samples, fmin=50, fmax=5000, sr=sr))),
+        Feature(name="spectral centroid", extractor = lambda samples, sr, config : np.mean(librosa.feature.spectral_centroid(y=samples, sr=sr)))
+    ], config)
 
 @pytest.fixture
 def dummy_snippets(dummy_feature_extractor):
