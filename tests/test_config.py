@@ -177,7 +177,7 @@ class TestLoadConfig():
     def test_merges_user_config_over_defaults(self, temp_config_file):
 
         injected_toml_content = """
-        [segmentation.onset]
+        [segmentation.onsets]
         hop_length = 2048
         """
 
@@ -185,11 +185,11 @@ class TestLoadConfig():
         config = load_config(config_path)
 
         # Check override
-        assert config['segmentation']['onset']['hop_length'] == 2048
+        assert config['segmentation']['onsets']['hop_length'] == 2048
 
         # Check missing keys have retained defaults
-        assert config['segmentation']['onset']['backtrack'] == False
-        assert config['segmentation']['onset']['normalise'] == False
+        assert config['segmentation']['onsets']['backtrack'] == False
+        assert config['segmentation']['onsets']['normalise'] == False
 
     def test_handles_malformed_toml(self, temp_config_file):
 
