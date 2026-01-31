@@ -40,7 +40,7 @@ def deep_merge(dest: dict, target: dict) -> dict:
     return dest
 
 
-def load_config(config_path: Path | None) -> dict:
+def load_config(config_path: Path | None = None) -> dict:
 
     final_config = deep_merge({}, DEFAULT_CONFIG)
 
