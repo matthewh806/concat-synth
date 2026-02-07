@@ -8,7 +8,7 @@ import uuid
 import logging
 import numpy as np
 import random
-from scipy.spatial import KDTree
+from scipy.spatial import KDTree, distance
 
 logger = logging.getLogger(__name__)
 
@@ -146,13 +146,38 @@ class Corpus:
     def nearest_neighbour_search(
             self,
             target_snippet: AudioSnippet,
-            exclusion_list: deque[uuid.UUID],
+            previous_snippet: AudioSnippet = None,
+            exclusion_list: deque[uuid.UUID] = [],
             num_candidates: int = 10,
+            weight_target: float = 0.5,
+            weight_previous: float = 0.5,
             fallback: bool = True
     ) -> AudioSnippet:
         '''
-        Find the nearest neighbour snippet for a given target snippet from the corpus
+        Find the best neighbour snippet for a given target snippet from the corpus
 
+        This finds the best neighbour based on minimising the cost function:
+            TotalCost = (weight_target * dist(u_c, target)) + (weight_previous * dist(u_c, u_p))
+        u_c is the a snippet in the corpus being considered as a candidate
+        target is the target snippet
+        u_p is the previous snippet (may be none)
+
+        In the general case the best neighbour candidate is based on minimising 
+        the best match in terms of TARGET and PREVIOUS snippet. 
+        The TARGET snippet takes primacy, using this we generate a list of
+        `num_candidates` from the corpus which best match the target
+
+        From this list we then calculate which of these minimises the 
+        TotalCost in terms of distance between the candidate and the target
+        and the candidate and the previous selection
+
+        For a purely free based (not matching to a target) 
+        concatenation, the `target_snippet` should  be the previous neighbour 
+        and previous_snippet should be None
+
+        For a purely target based concatenation the `target_snippet` should be
+        a snippet from the segmented target
+            
         This loops over the feature map and calculates an distance value
         between the target snippet and all other snippets.
 
@@ -163,9 +188,13 @@ class Corpus:
         This can be used to prevent a list of the N most recently used samples 
         from being included
         
+        :param target_snippet: The snippet to use as a target to match against
+        :param previous_snippet: The previous AudioSnippet in the path
         :param target_snippet: AudioSnippet to use as the target
-        :param a queue containing samples to skip from the nn calculation
-        :param if True if no neighbours are found try to fallback on the best alternative option, False returns none if none found
+        :param exlusion_list a queue containing samples to skip from the nn calculation
+        :param weight_target the weight given to the target snippet in determining
+        :param weight_previous the weight given to the previous snippet in determining the best neighbour
+        :param fallback if True if no neighbours are found try to fallback on the best alternative option, False returns none if none found
         :return: The nearnest neighbour AudioSnippet 
         '''
 
@@ -182,12 +211,32 @@ class Corpus:
             indices = [indices]
             distances = [distances]
 
-        for index, distance in zip(indices, distances):
-            candidate_snippet = self.index_to_snippet_map[int(index)]
+        valid_candidates = []
+        for index in indices:
+            snippet = self.index_to_snippet_map[int(index)]
+            if snippet != target_snippet and snippet.id not in exclusion_list:
+                valid_candidates.append(snippet)
 
-            if candidate_snippet != target_snippet and candidate_snippet.id not in exclusion_list:
-                logger.debug(f"Found neighbour for {target_snippet}: {candidate_snippet} -  Distance: {distance}")
-                return candidate_snippet
+        best_candidate = None
+        lowest_cost = float('inf') 
+        for candidate_snippet in valid_candidates:
+            candidate_feature_vector = self._get_snippet_feature_vector(candidate_snippet, self.feature_extractor)
+            cost_target = distance.euclidean(candidate_feature_vector, target_feature_vector)
+
+            cost_prev = 0.0
+            if previous_snippet: 
+                previous_feature_vector = self._get_snippet_feature_vector(previous_snippet, self.feature_extractor)
+                cost_prev = distance.euclidean(candidate_feature_vector, previous_feature_vector) 
+
+            total_cost = weight_target * cost_target + weight_previous * cost_prev
+
+            if total_cost < lowest_cost:
+                lowest_cost = total_cost
+                best_candidate = candidate_snippet
+        
+        if best_candidate:
+            logger.debug(f"Found best neighbour for {target_snippet}: {best_candidate}")
+            return best_candidate
             
         # Fallback in case we didn't find a neighbour
         if fallback and len(indices) > 1:
