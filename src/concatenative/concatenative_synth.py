@@ -10,7 +10,7 @@ from concatenative.audio.audio_loader import audio_loader, find_audio_files_recu
 from concatenative.analysis import Corpus, analyse_snippets
 from concatenative.analysis.feature_extractor import FeatureExtractor
 from concatenative.analysis.available_features import FEATURE_REGISTRY
-from concatenative.path import generate_concatenation_path, generate_target_based_path
+from concatenative.path import generate_freeform_path, generate_target_based_path
 from concatenative.constants import SUPPORTED_AUDIO_EXTENSIONS 
 from concatenative.visualisation.plotting import InteractiveCorpusPlot, plot_corpus_feature_distribution, plot_feature_vs_time
 from concatenative.config import load_config
@@ -161,7 +161,7 @@ def run_concatenator(file_paths,
         # Generate target based concatenation path
         concatenation_path = generate_target_based_path(corpus=corpus, target_snippets = target_snippets, cross_fade=cross_fade)
     else:
-        concatenation_path = generate_concatenation_path(corpus=corpus, output_length_sec=output_length, recent_history_size=500, cross_fade=cross_fade)
+        concatenation_path = generate_freeform_path(corpus=corpus, output_length_sec=output_length, recent_history_size=500, cross_fade=cross_fade)
     
     logger.debug(concatenation_path.get_stats())
 

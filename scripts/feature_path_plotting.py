@@ -3,7 +3,7 @@ from concatenative.audio.audio_loader import audio_loader, find_audio_files_recu
 from concatenative.analysis.corpus import Corpus
 from concatenative.analysis.available_features import FEATURE_REGISTRY
 from concatenative.analysis.feature_extractor import FeatureExtractor
-from concatenative.path.selector import generate_concatenation_path
+from concatenative.path.selector import generate_freeform_path
 from concatenative.config import load_config
 from concatenative.visualisation.plotting import plot_feature_vs_time
 from concatenative.utils.logger import setup_logger
@@ -45,7 +45,7 @@ if __name__ == "__main__":
     ]
 
     corpus = Corpus(snippets, FeatureExtractor(features=feature_set, config=config))
-    concatenation_path = generate_concatenation_path(corpus=corpus, output_length_sec=30)
+    concatenation_path = generate_freeform_path(corpus=corpus, output_length_sec=30)
     concatenated_signal = concatenation_path.render(output_length=30, output_sr=44100)
     plot_feature_vs_time(concatenated_signal, concatenation_path, feature_set[0])
 
