@@ -159,7 +159,12 @@ def run_concatenator(file_paths,
             calculate_normalised_feature_values(target_snippets, feature.name, corpus.get_feature_bounds(feature.name))
             
         # Generate target based concatenation path
-        concatenation_path = generate_target_based_path(corpus=corpus, target_snippets = target_snippets, cross_fade=cross_fade)
+        weight_target = config['selector']['weight_target']
+        weight_previous = config['selector']['weight_previous']
+        concatenation_path = generate_target_based_path(corpus=corpus, 
+                                                        target_snippets = target_snippets, 
+                                                        cross_fade=cross_fade, 
+                                                        weight_target=weight_target, weight_previous=weight_previous)
     else:
         concatenation_path = generate_freeform_path(corpus=corpus, output_length_sec=output_length, recent_history_size=500, cross_fade=cross_fade)
     
