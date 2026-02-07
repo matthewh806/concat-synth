@@ -52,7 +52,7 @@ def load_words(filename, limit=10):
     random.shuffle(words)
     return words[:limit] if len(words) >= limit else words
 
-def create_output_plots(corpus: Corpus, feature_set, output_signal, concatenation_path, output_dir: Path):
+def create_output_plots(corpus: Corpus, target_snippets, feature_set, output_signal, concatenation_path, output_dir: Path):
 
     if not output_dir.exists:
         logger.warning("Plotting directory {output_dir} does not exist. Skipping plotting")
@@ -81,6 +81,7 @@ def create_output_plots(corpus: Corpus, feature_set, output_signal, concatenatio
                                   feature_set[2], 
                                   normalised=True,
                                   path_to_draw=concatenation_path,
+                                  target_snippets=target_snippets,
                                   output_dir=output_dir)
 
 
@@ -169,7 +170,12 @@ def run_concatenator(file_paths,
     sf.write(output_path, concatenated_audio, 44100)
 
     if plots:
-        create_output_plots(corpus, features, concatenated_audio, concatenation_path, plots_directory)
+        create_output_plots(corpus, 
+                            target_snippets=target_snippets if target_snippets else None, 
+                            feature_set=features, 
+                            output_signal=concatenated_audio, 
+                            concatenation_path=concatenation_path, 
+                            output_dir=plots_directory)
 
 
 def run_download_backend(backend_name, 
