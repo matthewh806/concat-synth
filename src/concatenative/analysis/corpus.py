@@ -1,5 +1,5 @@
 from concatenative.audio import AudioSnippet
-from .analysis import analyse_snippets
+from .analysis import analyse_snippets, calculate_normalised_features
 from .feature_extractor import FeatureExtractor
 from .available_features import FEATURE_REGISTRY
 from collections import deque
@@ -30,7 +30,7 @@ class Corpus:
         self.index_to_snippet_map : Dict[int, AudioSnippet] = {}
 
         analyse_snippets(snippets, feature_extractor=feature_extractor)
-
+        self.feature_bounds = calculate_normalised_features(snippets, feature_extractor=feature_extractor)
         self.build_feature_space()
         
 
@@ -75,6 +75,13 @@ class Corpus:
         }
 
         return self.get_corpus_size() - len(unique_filenames)
+    
+    def get_feature_bounds(self, feature: str):
+        if feature not in self.feature_bounds:
+            logger.warning(f"Bounds for feature {feature} not found")
+            return None
+        
+        return self.feature_bounds[feature]
 
     def _get_snippet_feature_vector(self, snippet : AudioSnippet, feature_extractor: FeatureExtractor):
         '''

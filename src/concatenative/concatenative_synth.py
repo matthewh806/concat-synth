@@ -7,10 +7,10 @@ import logging
 from pathlib import Path
 from concatenative.downloaders import FreesoundAudioDownloader, YoutubeAudioDownloader, collect_snippets_parallel
 from concatenative.audio.audio_loader import audio_loader, find_audio_files_recursively
-from concatenative.analysis import Corpus
+from concatenative.analysis import Corpus, analyse_snippets
 from concatenative.analysis.feature_extractor import FeatureExtractor
 from concatenative.analysis.available_features import FEATURE_REGISTRY
-from concatenative.path import generate_concatenation_path
+from concatenative.path import generate_concatenation_path, generate_target_based_path
 from concatenative.constants import SUPPORTED_AUDIO_EXTENSIONS 
 from concatenative.visualisation.plotting import InteractiveCorpusPlot, plot_corpus_feature_distribution, plot_feature_vs_time
 from concatenative.config import load_config
@@ -87,6 +87,7 @@ def create_output_plots(corpus: Corpus, feature_set, output_signal, concatenatio
 def run_concatenator(file_paths, 
                      output_path,
                      config_path = None,
+                     target_path = None,
                      feature_set = FEATURE_REGISTRY.keys(), 
                      feature_weights = {},
                      segmentation_strategy = "none",
@@ -140,7 +141,28 @@ def run_concatenator(file_paths,
         )
     ]
     corpus = Corpus(snippets=snippets, feature_extractor=feature_extractor, feature_weights=feature_weights)
-    concatenation_path = generate_concatenation_path(corpus=corpus, output_length_sec=output_length, recent_history_size=500, cross_fade=cross_fade)
+
+    if target_path:
+        target_snippets = audio_loader(Path(target_path), 
+                                       config=config, 
+                                       max_clip_length=max_snippet_length, 
+                                       segmentation_stratgy=segmentation_strategy)
+        
+        # Extract the target features and normalise against the bounds from the corpus
+        analyse_snippets(target_snippets, feature_extractor)
+        for feature in features:
+            feature_bounds = corpus.get_feature_bounds(feature.name)
+            logger.debug(f"Feature bounds for {feature.name}: {feature_bounds}")
+
+            for target_snippet in target_snippets:
+                feature_value = target_snippet.features[feature.name]
+                target_snippet.normalised_features[feature.name] = (feature_value - feature_bounds['min']) / (feature_bounds['max'] - feature_bounds['min'])
+
+        # Generate target based concatenation path
+        concatenation_path = generate_target_based_path(corpus=corpus, target_snippets = target_snippets, cross_fade=cross_fade)
+    else:
+        concatenation_path = generate_concatenation_path(corpus=corpus, output_length_sec=output_length, recent_history_size=500, cross_fade=cross_fade)
+    
     logger.debug(concatenation_path.get_stats())
 
     concatenated_audio = concatenation_path.render(output_length)
@@ -154,6 +176,7 @@ def run_concatenator(file_paths,
 def run_download_backend(backend_name, 
                          words_path, 
                          output_path,
+                         target_path = None,
                          config_path = None,
                          feature_set = FEATURE_REGISTRY.keys(),
                          feature_weights = {},
@@ -206,7 +229,8 @@ def run_download_backend(backend_name,
 
     download_paths = collect_snippets_parallel(backend, queries)
     run_concatenator(download_paths, 
-                     output_path=output_path, 
+                     output_path=output_path,
+                     target_path = target_path, 
                      config_path=config_path,
                      feature_set=feature_set, 
                      feature_weights=feature_weights,
@@ -220,6 +244,7 @@ def run_download_backend(backend_name,
 
 def run_dir_backend(input_dir, 
                     output_path, 
+                    target_path = None,
                     config_path = None,
                     feature_set = FEATURE_REGISTRY.keys(),
                     feature_weights = {},
@@ -252,7 +277,8 @@ def run_dir_backend(input_dir,
     audio_dir = Path(input_dir)
     files = find_audio_files_recursively(audio_dir, extensions=extensions)
     run_concatenator(files, 
-                     output_path=output_path, 
+                     output_path=output_path,
+                     target_path = target_path, 
                      config_path=config_path,
                      output_length=output_length, 
                      feature_set=feature_set, 

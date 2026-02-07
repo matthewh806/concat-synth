@@ -1,7 +1,9 @@
 from concatenative.utils.timer import timed
 from concatenative.analysis.corpus import Corpus
+from concatenative.audio import AudioSnippet
 from .concatenation_path import ConcatenationPath
 from collections import deque
+from typing import List
 import logging
 
 logger = logging.getLogger(__name__)
@@ -59,6 +61,33 @@ def generate_concatenation_path(corpus: Corpus, output_length_sec: float = 10, o
 
     logger.info(f"Generated concatenation path of length: {len(concatenation_path)} snippets. "
                 f"Target length: {output_length_sec:.2f}s, "
+                f"Estimated actual output {output_length:.2f}s")
+    
+    return ConcatenationPath(concatenation_path, cross_fade_milliseconds=cross_fade)
+
+@timed
+def generate_target_based_path(corpus: Corpus, target_snippets: List[AudioSnippet], output_sample_rate = 44100, recent_history_size = 10, cross_fade=50):
+    
+    if not target_snippets:
+        raise ValueError("Target snippet list was empty!")
+    
+    concatenation_path = []
+    corpus_size = corpus.get_corpus_size()
+    recently_used_list = deque(maxlen= recent_history_size if recent_history_size < corpus_size else corpus_size // 2)
+    output_length = 0
+
+    for target_snippet in target_snippets:
+        nearest_snippet = corpus.nearest_neighbour_search(target_snippet=target_snippet, exclusion_list=recently_used_list)
+
+        if nearest_snippet is None:
+            logger.warning("No nearest neighbour found")
+            nearest_snippet = corpus.get_random_snippet
+        
+        recently_used_list.append(nearest_snippet.id)
+        concatenation_path.append(nearest_snippet)
+        output_length += len(nearest_snippet.samples) / output_sample_rate - cross_fade / 1000
+    
+    logger.info(f"Generated concatenation path of length: {len(concatenation_path)} snippets. "
                 f"Estimated actual output {output_length:.2f}s")
     
     return ConcatenationPath(concatenation_path, cross_fade_milliseconds=cross_fade)

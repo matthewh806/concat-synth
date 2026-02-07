@@ -84,6 +84,8 @@ def calculate_normalised_features(snippets : List[AudioSnippet], feature_extract
 
             logging.debug(f"{feature_name}: {value:.4f}, normalised: {snippet.normalised_features[feature_name]:.4f}")
 
+    return feature_bounds
+
 @timed
 def analyse_snippets(snippets: List[AudioSnippet], feature_extractor: FeatureExtractor):
     '''
@@ -109,5 +111,5 @@ def analyse_snippets(snippets: List[AudioSnippet], feature_extractor: FeatureExt
         analyse_snippet,
         feature_extractor=feature_extractor
     )
+    
     run_parallel_cpu_tasks(worker_task_function, snippets, task_complete_callback=task_complete_callback)
-    calculate_normalised_features(snippets, feature_extractor=feature_extractor)
