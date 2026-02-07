@@ -83,7 +83,15 @@ def main():
         default=logging.INFO
     )
 
-    parser = argparse.ArgumentParser("Concatenative Audio Synthesis")
+    parser = argparse.ArgumentParser(prog="concat-synth", 
+                                     description=(
+                                         '''
+                                         A Concatenative Audio Synthesis engine which will create new sounds by stitching together existing audio.
+                                         The system will recursively segment and analyse a directory of audio material and create a Corpus of sounds.
+                                         Using the analysis results the corpus can be used to create new sounds, either by trying to find the best match\n
+                                         to a provided target audio source or in a freeform way.
+                                         '''
+                                        ))
     subparsers = parser.add_subparsers(dest="command")
 
     #---------------------------------
