@@ -118,7 +118,7 @@ def generate_target_based_path(corpus: Corpus,
             logger.warning("No nearest neighbour found")
             nearest_snippet = corpus.get_random_snippet
 
-        previous_snippet = previous_snippet
+        previous_snippet = nearest_snippet
         
         recently_used_list.append(nearest_snippet.id)
         concatenation_path.append(nearest_snippet)
