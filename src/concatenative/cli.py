@@ -14,6 +14,10 @@ From the installed package it can be run as: concat-synth
 def main():
     parent_parser = argparse.ArgumentParser(add_help=False)
     parent_parser.add_argument(
+        '--target', type=str, default=None,
+        help=("Path to an audio file to use as the concatenation target")
+    )
+    parent_parser.add_argument(
         "--out", type=str, default="output.wav",
         help=(
             "Output audio file path. Must include the file extension.\n"
@@ -146,6 +150,7 @@ def main():
             words_path = args.words,
             output_length=args.output_length,
             output_path = args.out,
+            target_path = args.target if args.target else None,
             config_path = args.config if args.config else None,
             feature_set=features,
             feature_weights = feature_weights,
@@ -162,6 +167,7 @@ def main():
             output_path= args.out,
             feature_set=features,
             config_path = args.config if args.config else None,
+            target_path = args.target if args.target else None,
             feature_weights = feature_weights,
             output_length=args.output_length,
             max_snippet_length=args.max_slice_length,
