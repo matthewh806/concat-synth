@@ -71,12 +71,12 @@ def test_corpus_duplicates(dummy_corpus):
     assert(dummy_corpus.get_number_of_duplicates() == 1)
 
 
-def test_nearest_neighbour_search(dummy_corpus):
+def test_find_best_neighbour(dummy_corpus):
     '''
     Test that the nearest neighbour search returns the expected snippet
     '''
     target = dummy_corpus.snippets[0]
-    nearest_neighbour = dummy_corpus.nearest_neighbour_search(target, exclusion_list=deque())
+    nearest_neighbour = dummy_corpus.find_best_neighbour(target, exclusion_list=deque())
 
     assert(nearest_neighbour != None)
     assert(nearest_neighbour.metadata['filename'] == 'B')
@@ -89,7 +89,7 @@ def test_nearest_neighbour_exclusion(dummy_corpus):
 
     target = dummy_corpus.snippets[0]
     exclusion_list = deque([dummy_corpus.snippets[1].id])
-    nearest_neighbour = dummy_corpus.nearest_neighbour_search(target, exclusion_list=exclusion_list, fallback=False)
+    nearest_neighbour = dummy_corpus.find_best_neighbour(target, exclusion_list=exclusion_list, fallback=False)
 
     assert(nearest_neighbour != None)
     assert(nearest_neighbour.metadata['filename'] != 'B')
@@ -104,7 +104,7 @@ def test_no_possible_neighbours(dummy_corpus):
     target = dummy_corpus.snippets[0]
     exclusion_list = deque([s.id for s in dummy_corpus.snippets])
 
-    nearest_neighbour = dummy_corpus.nearest_neighbour_search(target, exclusion_list=exclusion_list, fallback=False)
+    nearest_neighbour = dummy_corpus.find_best_neighbour(target, exclusion_list=exclusion_list, fallback=False)
     assert(nearest_neighbour == None)
 
 
@@ -116,7 +116,7 @@ def test_no_possible_neighbours_fallback(dummy_corpus):
     target = dummy_corpus.snippets[0]
     exclusion_list = deque([s.id for s in dummy_corpus.snippets])
 
-    nearest_neighbour = dummy_corpus.nearest_neighbour_search(target, exclusion_list=exclusion_list, fallback=True)
+    nearest_neighbour = dummy_corpus.find_best_neighbour(target, exclusion_list=exclusion_list, fallback=True)
     
     assert(nearest_neighbour != None)
     assert(nearest_neighbour.metadata['filename'] == 'B')
@@ -133,7 +133,7 @@ def test_setting_nearest_neighbour_num_candidates(dummy_corpus):
     target = dummy_corpus.snippets[0]
     exclusion_list = deque([s.id for s in dummy_corpus.snippets])
 
-    nearest_neighbour = dummy_corpus.nearest_neighbour_search(target, exclusion_list=exclusion_list, fallback=True, num_candidates=1)
+    nearest_neighbour = dummy_corpus.find_best_neighbour(target, exclusion_list=exclusion_list, fallback=True, num_candidates=1)
     assert(nearest_neighbour == None)
 
 
@@ -184,7 +184,7 @@ class TestWeightedDistance():
     
     def test_rms_weighted_corpus(self, rms_weighted_corpus):
         target = rms_weighted_corpus.snippets[0]
-        nearest_neighbour = rms_weighted_corpus.nearest_neighbour_search(target, exclusion_list = [])
+        nearest_neighbour = rms_weighted_corpus.find_best_neighbour(target, exclusion_list = [])
         
         assert nearest_neighbour != None
         assert nearest_neighbour.metadata['filename'] == 'B'
@@ -192,7 +192,7 @@ class TestWeightedDistance():
 
     def test_rms_weighted_corpus(self, pitch_weighted_corpus):
         target = pitch_weighted_corpus.snippets[1]
-        nearest_neighbour = pitch_weighted_corpus.nearest_neighbour_search(target, exclusion_list = [])
+        nearest_neighbour = pitch_weighted_corpus.find_best_neighbour(target, exclusion_list = [])
     
         assert nearest_neighbour != None
         assert nearest_neighbour.metadata['filename'] == 'A'
@@ -200,7 +200,7 @@ class TestWeightedDistance():
 
     def test_rms_weighted_corpus(self, spectral_centroid_weighted_corpus):
         target = spectral_centroid_weighted_corpus.snippets[2]
-        nearest_neighbour = spectral_centroid_weighted_corpus.nearest_neighbour_search(target, exclusion_list = [])
+        nearest_neighbour = spectral_centroid_weighted_corpus.find_best_neighbour(target, exclusion_list = [])
     
         assert nearest_neighbour != None
         assert nearest_neighbour.metadata['filename'] == 'D'

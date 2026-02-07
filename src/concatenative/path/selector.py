@@ -45,7 +45,7 @@ def generate_freeform_path(corpus: Corpus, output_length_sec: float = 10, output
     output_length = len(target.samples) / output_sample_rate
 
     while output_length < output_length_sec:
-        target = corpus.nearest_neighbour_search(target_snippet=target, exclusion_list=recently_used_list)
+        target = corpus.find_best_neighbour(target_snippet=target, exclusion_list=recently_used_list)
 
         if target is None:
             # Just randomly pick a new one in this case
@@ -94,7 +94,7 @@ def generate_target_based_path(corpus: Corpus, target_snippets: List[AudioSnippe
     output_length = 0
 
     for target_snippet in target_snippets:
-        nearest_snippet = corpus.nearest_neighbour_search(target_snippet=target_snippet, exclusion_list=recently_used_list)
+        nearest_snippet = corpus.find_best_neighbour(target_snippet=target_snippet, exclusion_list=recently_used_list)
 
         if nearest_snippet is None:
             logger.warning("No nearest neighbour found")

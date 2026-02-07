@@ -143,7 +143,7 @@ class Corpus:
         self.search_tree = KDTree(np.array(feature_vectors))
 
     
-    def nearest_neighbour_search(
+    def find_best_neighbour(
             self,
             target_snippet: AudioSnippet,
             previous_snippet: AudioSnippet = None,
