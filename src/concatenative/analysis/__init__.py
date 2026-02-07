@@ -1,4 +1,4 @@
-from .analysis import analyse_snippets, analyse_snippet, calculate_normalised_features
+from .analysis import analyse_snippets, analyse_snippet, calculate_normalised_features, calculate_normalised_feature_values
 from .corpus import Corpus
 
 __all__ = [

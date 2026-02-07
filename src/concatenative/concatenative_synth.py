@@ -7,7 +7,7 @@ import logging
 from pathlib import Path
 from concatenative.downloaders import FreesoundAudioDownloader, YoutubeAudioDownloader, collect_snippets_parallel
 from concatenative.audio.audio_loader import audio_loader, find_audio_files_recursively
-from concatenative.analysis import Corpus, analyse_snippets
+from concatenative.analysis import Corpus, analyse_snippets, calculate_normalised_feature_values
 from concatenative.analysis.feature_extractor import FeatureExtractor
 from concatenative.analysis.available_features import FEATURE_REGISTRY
 from concatenative.path import generate_freeform_path, generate_target_based_path
@@ -151,13 +151,8 @@ def run_concatenator(file_paths,
         # Extract the target features and normalise against the bounds from the corpus
         analyse_snippets(target_snippets, feature_extractor)
         for feature in features:
-            feature_bounds = corpus.get_feature_bounds(feature.name)
-            logger.debug(f"Feature bounds for {feature.name}: {feature_bounds}")
-
-            for target_snippet in target_snippets:
-                feature_value = target_snippet.features[feature.name]
-                target_snippet.normalised_features[feature.name] = (feature_value - feature_bounds['min']) / (feature_bounds['max'] - feature_bounds['min'])
-
+            calculate_normalised_feature_values(target_snippets, feature.name, corpus.get_feature_bounds(feature.name))
+            
         # Generate target based concatenation path
         concatenation_path = generate_target_based_path(corpus=corpus, target_snippets = target_snippets, cross_fade=cross_fade)
     else:

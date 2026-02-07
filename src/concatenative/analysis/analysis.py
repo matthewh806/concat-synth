@@ -113,3 +113,33 @@ def analyse_snippets(snippets: List[AudioSnippet], feature_extractor: FeatureExt
     )
     
     run_parallel_cpu_tasks(worker_task_function, snippets, task_complete_callback=task_complete_callback)
+
+
+def calculate_normalised_feature_values(target_snippets: List[AudioSnippet], feature_name: str, feature_bounds: dict):
+    '''
+    Normalises a feature in a list of target snippets. This is based on a min / max value provided in the feature bounds 
+    This is typically done to normalise a target sounds features to be within the same range as a normalised corpus of sounds
+
+    This is written in place, into the normalised_features instance member
+    
+    :param target_snippets: list of snippets to normalise
+    :param feature_name: name of the feature to normalise
+    :param feature_bounds: dict of feature bounds, should be of the form {'min': x.yf, 'max':x.yf}
+    '''
+    
+    logger.debug(f"Feature bounds for {feature_name}: {feature_bounds}")
+
+    if 'min' not in feature_bounds:
+        ValueError("Feature bounds dictionary is missing the min value!")
+
+    if 'max' not in feature_bounds:
+        ValueError("Feature bounds dictionary is missing the max value!")
+
+    min = feature_bounds['min']
+    max = feature_bounds['max']
+
+    # TODO test for value float values?
+
+    for target_snippet in target_snippets:
+        feature_value = target_snippet.features[feature_name]
+        target_snippet.normalised_features[feature_name] = (feature_value - min) / (max - min)
