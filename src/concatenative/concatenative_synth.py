@@ -98,12 +98,16 @@ def run_concatenator(file_paths,
                      plots = False):
     '''
     Loads the audio files, concatenates them and outputs the audio. 
+    The type of concatenation performed depends on whether the target_path parameter is provided.
+    Given this parameter a target based concatenation will be performed, otherwise a freeform path
+    will be generated.
 
     Note: The output format is determined by the extension in the `output_path` parameter
 
     :param file_paths list of file paths to use in the concatenation process
     :param output_path path to the concatenated output audio file
     :param config_path path to a custom config file
+    :param target_path path to a target audio file
     :param feature_set list of feature names (e.g. 'rms', 'pitch') to be used in the audio analysis
     :param segmentation_strategy the strategy for splitting up an audio sample
     :param output_length length of the output audio file
@@ -198,6 +202,7 @@ def run_download_backend(backend_name,
     :param backend_name: The name of the backend to use for downloading audio (youtube, freesound)
     :param words_path: Path to a list of words to use as search terms for downloads
     :param output_path: Path to output the concatenated audio to
+    :param target_path path to a target audio file
     :param feature_set list of feature names (e.g. 'rms', 'pitch') to be used in the audio analysis
     :param segmentation_strategy the strategy for splitting up an audio sample
     :param output_length: Desired final output length in seconds
@@ -257,6 +262,7 @@ def run_dir_backend(input_dir,
     
     :param input_dir: The directory root to use as a basis to recursively load audio files from
     :param output_path: Path to output the concatenated audio to
+    :param target_path path to a target audio file
     :param feature_set list of feature names (e.g. 'rms', 'pitch') to be used in the audio analysis
     :param segmentation_strategy the strategy for splitting up an audio sample
     :param output_length: Desired final output length in seconds

@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 @timed 
 def generate_freeform_path(corpus: Corpus, output_length_sec: float = 10, output_sample_rate = 44100, start_snippet = None, recent_history_size = 10, cross_fade=50):
     '''
-    Generates a path for the concatenator to use to create the audio collage / mosaic
+    Generates a freeform path for the concatenator to use to create the audio collage / mosaic
 
     Algorithm outline
     1. From the list of snippets from the corpus to find a random snippet to start with
@@ -67,7 +67,24 @@ def generate_freeform_path(corpus: Corpus, output_length_sec: float = 10, output
 
 @timed
 def generate_target_based_path(corpus: Corpus, target_snippets: List[AudioSnippet], output_sample_rate = 44100, recent_history_size = 10, cross_fade=50):
+    '''
+    Generates a target based path for the concatenator to use to create the audio collage / mosaic
+
+    Algorithm outline
+    1. Loop over the target snippets
+        i. Each time around the loop finds the nearest neighbour to the target snippet
+        ii. Adds the detected nearest neighbour to the concatenation path
+        iv. Nearest neighbour is added to the recently_used_list to prevent immediate reuse 
+    3. Returns the generated list of snippets (ConcatenationPath instance)
     
+    :param corpus: Corpus containing AudioSnippets and analysis data
+    :param target_snippets segmented and fully analysed target sound, broken down into snippets
+    :param output_sample_rate: Sample rate out of the output file
+    :param recent_history_size: Size of the recent snippets list to exclude from re-selection
+    :param cross_fade size of the xfade between neighbouring snippets
+    :return ConcatenationPath containing the generated path through the snippets
+    '''
+
     if not target_snippets:
         raise ValueError("Target snippet list was empty!")
     
