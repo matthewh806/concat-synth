@@ -9,7 +9,12 @@ import logging
 logger = logging.getLogger(__name__)
 
 @timed 
-def generate_freeform_path(corpus: Corpus, output_length_sec: float = 10, output_sample_rate = 44100, start_snippet = None, recent_history_size = 10, cross_fade=50):
+def generate_freeform_path(corpus: Corpus, 
+                           output_length_sec: float = 10, 
+                           output_sample_rate = 44100, 
+                           start_snippet = None, 
+                           recent_history_size = 10, 
+                           cross_fade=50):
     '''
     Generates a freeform path for the concatenator to use to create the audio collage / mosaic
 
@@ -66,7 +71,14 @@ def generate_freeform_path(corpus: Corpus, output_length_sec: float = 10, output
     return ConcatenationPath(concatenation_path, cross_fade_milliseconds=cross_fade)
 
 @timed
-def generate_target_based_path(corpus: Corpus, target_snippets: List[AudioSnippet], output_sample_rate = 44100, recent_history_size = 10, cross_fade=50):
+def generate_target_based_path(corpus: Corpus, 
+                               target_snippets: List[AudioSnippet], 
+                               output_sample_rate = 44100, 
+                               recent_history_size = 10, 
+                               cross_fade=50,
+                               weight_target: float = 0.5,
+                               weight_previous: float = 0.5,
+                               ):
     '''
     Generates a target based path for the concatenator to use to create the audio collage / mosaic
 
@@ -82,6 +94,8 @@ def generate_target_based_path(corpus: Corpus, target_snippets: List[AudioSnippe
     :param output_sample_rate: Sample rate out of the output file
     :param recent_history_size: Size of the recent snippets list to exclude from re-selection
     :param cross_fade size of the xfade between neighbouring snippets
+    :param weight_target the weight given to the target snippet in determining the best neighbour
+    :param weight_previous the weight given to the previous snippet in determining the best neighbour
     :return ConcatenationPath containing the generated path through the snippets
     '''
 
@@ -93,12 +107,18 @@ def generate_target_based_path(corpus: Corpus, target_snippets: List[AudioSnippe
     recently_used_list = deque(maxlen= recent_history_size if recent_history_size < corpus_size else corpus_size // 2)
     output_length = 0
 
+    previous_snippet = None
     for target_snippet in target_snippets:
-        nearest_snippet = corpus.find_best_neighbour(target_snippet=target_snippet, exclusion_list=recently_used_list)
+        nearest_snippet = corpus.find_best_neighbour(target_snippet=target_snippet, 
+                                                     previous_snippet=previous_snippet, 
+                                                     exclusion_list=recently_used_list, 
+                                                     weight_target=weight_target, weight_previous=weight_previous)
 
         if nearest_snippet is None:
             logger.warning("No nearest neighbour found")
             nearest_snippet = corpus.get_random_snippet
+
+        previous_snippet = previous_snippet
         
         recently_used_list.append(nearest_snippet.id)
         concatenation_path.append(nearest_snippet)
