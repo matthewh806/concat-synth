@@ -12,7 +12,7 @@ from concatenative.analysis.feature_extractor import FeatureExtractor
 from concatenative.analysis.available_features import FEATURE_REGISTRY
 from concatenative.path import generate_freeform_path, generate_target_based_path
 from concatenative.constants import SUPPORTED_AUDIO_EXTENSIONS 
-from concatenative.visualisation.plotting import InteractiveCorpusPlot, plot_corpus_feature_distribution, plot_feature_vs_time
+from concatenative.visualisation.plotting import InteractiveCorpusPlot, plot_corpus_feature_distribution, plot_feature_vs_time, plot_target_path_distance_vs_time
 from concatenative.config import load_config
 
 logger = logging.getLogger(__name__)
@@ -73,6 +73,9 @@ def create_output_plots(corpus: Corpus, target_snippets, feature_set, output_sig
         if feature.name in FEATURE_REGISTRY:
             plot_corpus_feature_distribution(corpus, feature, output_dir=output_dir)
             plot_feature_vs_time(output_signal, concatenation_path, feature, output_dir=output_dir)
+
+    if target_snippets:
+        plot_target_path_distance_vs_time(target_path=target_snippets, path=concatenation_path, features=feature_set, output_dir=output_dir)
 
     if len(feature_set) == 3:
         _ = InteractiveCorpusPlot(corpus.snippets, 

@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy.spatial import distance
 from typing import List, Optional, Callable, Dict
 from concatenative.audio.audio_snippet import AudioSnippet
 from concatenative.path.concatenation_path import ConcatenationPath
@@ -394,6 +395,48 @@ def plot_feature_vs_time(concatenated_signal: np.ndarray, path : ConcatenationPa
         output_name = f"feature_vs_time_{feature.name}"  
         output_path = output_dir / output_name
         logger.info(f"Saving feature plot to {output_path}")
+        fig.savefig(output_path.resolve(), dpi=150, bbox_inches='tight')
+        plt.close(fig)
+    else:
+        plt.show()
+
+def plot_target_path_distance_vs_time(target_path: List[AudioSnippet], path: ConcatenationPath, features: List[Feature], output_dir: Path | None = None):
+    '''
+    Creates a plot of the euclidean distance between the target signal and the generated concatenation path
+    based on its features.
+    
+    :param target_path: The target snippets we're synthesising against
+    :param path: The generated concatenation path
+    :param features: The feature set to use in the distance calculation
+    :param output_dir: The output directory to save the plot to
+    '''
+
+    distances = []
+
+    if len(target_path) != len(path):
+        raise ValueError(f"The target and concatenation path must be the same length. {len(target_path)} ! = {len(ConcatenationPath)}")
+
+    num_frames = len(target_path)
+
+    # Get the target & path vectors
+    target_vectors = [[s.normalised_features[feature.name] for feature in features] for s in target_path]
+    path_vectors = [[s.normalised_features[feature.name] for feature in features] for s in path.snippets_path]
+
+    # For each frame calculate the euclidean distance
+    for idx in range(num_frames):
+        distances.append(distance.euclidean(target_vectors[idx], path_vectors[idx]))
+
+
+    fig, ax = plt.subplots(figsize=(12,6))
+    ax.plot(distances)
+    ax.set_title("Target Match Distance")
+    ax.set_xlabel("Path step")
+    ax.set_ylabel("Euclidean distance in Normalised Feature Space")
+    ax.grid()
+
+    if output_dir:
+        output_name = f"target_path_distance"  
+        output_path = output_dir / output_name
         fig.savefig(output_path.resolve(), dpi=150, bbox_inches='tight')
         plt.close(fig)
     else:
