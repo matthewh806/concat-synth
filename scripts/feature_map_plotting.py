@@ -6,7 +6,7 @@ from concatenative.analysis.corpus import Corpus
 from concatenative.analysis.available_features import FEATURE_REGISTRY
 from concatenative.analysis.feature_extractor import FeatureExtractor
 from concatenative.config import load_config
-from concatenative.path.selector import generate_concatenation_path
+from concatenative.path.selector import generate_freeform_path
 from concatenative.visualisation.plotting import InteractiveCorpusPlot
 from concatenative.utils.logger import setup_logger
 import logging
@@ -62,7 +62,7 @@ if __name__ == "__main__":
     ]
     corpus = Corpus(snippets, FeatureExtractor(features=feature_set, config=config))
     print(f"Number of duplicate snippets: {corpus.get_number_of_duplicates()}")
-    concatenation_path = generate_concatenation_path(corpus=corpus, output_length_sec=20)
+    concatenation_path = generate_freeform_path(corpus=corpus, output_length_sec=20)
 
     print(concatenation_path.get_stats())    
 

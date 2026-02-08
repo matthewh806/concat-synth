@@ -7,12 +7,12 @@ import logging
 from pathlib import Path
 from concatenative.downloaders import FreesoundAudioDownloader, YoutubeAudioDownloader, collect_snippets_parallel
 from concatenative.audio.audio_loader import audio_loader, find_audio_files_recursively
-from concatenative.analysis import Corpus
+from concatenative.analysis import Corpus, analyse_snippets, calculate_normalised_feature_values
 from concatenative.analysis.feature_extractor import FeatureExtractor
 from concatenative.analysis.available_features import FEATURE_REGISTRY
-from concatenative.path import generate_concatenation_path
+from concatenative.path import generate_freeform_path, generate_target_based_path
 from concatenative.constants import SUPPORTED_AUDIO_EXTENSIONS 
-from concatenative.visualisation.plotting import InteractiveCorpusPlot, plot_corpus_feature_distribution, plot_feature_vs_time
+from concatenative.visualisation.plotting import InteractiveCorpusPlot, plot_corpus_feature_distribution, plot_feature_vs_time, plot_target_path_distance_vs_time
 from concatenative.config import load_config
 
 logger = logging.getLogger(__name__)
@@ -52,7 +52,7 @@ def load_words(filename, limit=10):
     random.shuffle(words)
     return words[:limit] if len(words) >= limit else words
 
-def create_output_plots(corpus: Corpus, feature_set, output_signal, concatenation_path, output_dir: Path):
+def create_output_plots(corpus: Corpus, target_snippets, feature_set, output_signal, concatenation_path, output_dir: Path):
 
     if not output_dir.exists:
         logger.warning("Plotting directory {output_dir} does not exist. Skipping plotting")
@@ -74,6 +74,9 @@ def create_output_plots(corpus: Corpus, feature_set, output_signal, concatenatio
             plot_corpus_feature_distribution(corpus, feature, output_dir=output_dir)
             plot_feature_vs_time(output_signal, concatenation_path, feature, output_dir=output_dir)
 
+    if target_snippets:
+        plot_target_path_distance_vs_time(target_path=target_snippets, path=concatenation_path, features=feature_set, output_dir=output_dir)
+
     if len(feature_set) == 3:
         _ = InteractiveCorpusPlot(corpus.snippets, 
                                   feature_set[0], 
@@ -81,12 +84,14 @@ def create_output_plots(corpus: Corpus, feature_set, output_signal, concatenatio
                                   feature_set[2], 
                                   normalised=True,
                                   path_to_draw=concatenation_path,
+                                  target_snippets=target_snippets,
                                   output_dir=output_dir)
 
 
 def run_concatenator(file_paths, 
                      output_path,
                      config_path = None,
+                     target_path = None,
                      feature_set = FEATURE_REGISTRY.keys(), 
                      feature_weights = {},
                      segmentation_strategy = "none",
@@ -97,12 +102,16 @@ def run_concatenator(file_paths,
                      plots = False):
     '''
     Loads the audio files, concatenates them and outputs the audio. 
+    The type of concatenation performed depends on whether the target_path parameter is provided.
+    Given this parameter a target based concatenation will be performed, otherwise a freeform path
+    will be generated.
 
     Note: The output format is determined by the extension in the `output_path` parameter
 
     :param file_paths list of file paths to use in the concatenation process
     :param output_path path to the concatenated output audio file
     :param config_path path to a custom config file
+    :param target_path path to a target audio file
     :param feature_set list of feature names (e.g. 'rms', 'pitch') to be used in the audio analysis
     :param segmentation_strategy the strategy for splitting up an audio sample
     :param output_length length of the output audio file
@@ -140,7 +149,28 @@ def run_concatenator(file_paths,
         )
     ]
     corpus = Corpus(snippets=snippets, feature_extractor=feature_extractor, feature_weights=feature_weights)
-    concatenation_path = generate_concatenation_path(corpus=corpus, output_length_sec=output_length, recent_history_size=500, cross_fade=cross_fade)
+
+    if target_path:
+        target_snippets = audio_loader(Path(target_path), 
+                                       config=config, 
+                                       max_clip_length=max_snippet_length, 
+                                       segmentation_stratgy=segmentation_strategy)
+        
+        # Extract the target features and normalise against the bounds from the corpus
+        analyse_snippets(target_snippets, feature_extractor)
+        for feature in features:
+            calculate_normalised_feature_values(target_snippets, feature.name, corpus.get_feature_bounds(feature.name))
+            
+        # Generate target based concatenation path
+        weight_target = config['selector']['weight_target']
+        weight_previous = config['selector']['weight_previous']
+        concatenation_path = generate_target_based_path(corpus=corpus, 
+                                                        target_snippets = target_snippets, 
+                                                        cross_fade=cross_fade, 
+                                                        weight_target=weight_target, weight_previous=weight_previous)
+    else:
+        concatenation_path = generate_freeform_path(corpus=corpus, output_length_sec=output_length, recent_history_size=500, cross_fade=cross_fade)
+    
     logger.debug(concatenation_path.get_stats())
 
     concatenated_audio = concatenation_path.render(output_length)
@@ -148,12 +178,18 @@ def run_concatenator(file_paths,
     sf.write(output_path, concatenated_audio, 44100)
 
     if plots:
-        create_output_plots(corpus, features, concatenated_audio, concatenation_path, plots_directory)
+        create_output_plots(corpus, 
+                            target_snippets=target_snippets if target_snippets else None, 
+                            feature_set=features, 
+                            output_signal=concatenated_audio, 
+                            concatenation_path=concatenation_path, 
+                            output_dir=plots_directory)
 
 
 def run_download_backend(backend_name, 
                          words_path, 
                          output_path,
+                         target_path = None,
                          config_path = None,
                          feature_set = FEATURE_REGISTRY.keys(),
                          feature_weights = {},
@@ -180,6 +216,7 @@ def run_download_backend(backend_name,
     :param backend_name: The name of the backend to use for downloading audio (youtube, freesound)
     :param words_path: Path to a list of words to use as search terms for downloads
     :param output_path: Path to output the concatenated audio to
+    :param target_path path to a target audio file
     :param feature_set list of feature names (e.g. 'rms', 'pitch') to be used in the audio analysis
     :param segmentation_strategy the strategy for splitting up an audio sample
     :param output_length: Desired final output length in seconds
@@ -206,7 +243,8 @@ def run_download_backend(backend_name,
 
     download_paths = collect_snippets_parallel(backend, queries)
     run_concatenator(download_paths, 
-                     output_path=output_path, 
+                     output_path=output_path,
+                     target_path = target_path, 
                      config_path=config_path,
                      feature_set=feature_set, 
                      feature_weights=feature_weights,
@@ -220,6 +258,7 @@ def run_download_backend(backend_name,
 
 def run_dir_backend(input_dir, 
                     output_path, 
+                    target_path = None,
                     config_path = None,
                     feature_set = FEATURE_REGISTRY.keys(),
                     feature_weights = {},
@@ -237,6 +276,7 @@ def run_dir_backend(input_dir,
     
     :param input_dir: The directory root to use as a basis to recursively load audio files from
     :param output_path: Path to output the concatenated audio to
+    :param target_path path to a target audio file
     :param feature_set list of feature names (e.g. 'rms', 'pitch') to be used in the audio analysis
     :param segmentation_strategy the strategy for splitting up an audio sample
     :param output_length: Desired final output length in seconds
@@ -252,7 +292,8 @@ def run_dir_backend(input_dir,
     audio_dir = Path(input_dir)
     files = find_audio_files_recursively(audio_dir, extensions=extensions)
     run_concatenator(files, 
-                     output_path=output_path, 
+                     output_path=output_path,
+                     target_path = target_path, 
                      config_path=config_path,
                      output_length=output_length, 
                      feature_set=feature_set, 

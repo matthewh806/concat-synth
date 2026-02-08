@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy.spatial import distance
 from typing import List, Optional, Callable, Dict
 from concatenative.audio.audio_snippet import AudioSnippet
 from concatenative.path.concatenation_path import ConcatenationPath
@@ -31,6 +32,10 @@ class InteractiveCorpusPlot:
     :param y_axis_feature: The feature for the y axis
     :param colour_feature: The feature for the colour dimension
     :param normalised: Plot the normalised values
+    :param on_click_callback a method to be called when a snippet in the plot is clicked
+    :param path_to_draw a concatenation path to draw on top of the corpus map
+    :param target_snippets a list of Snippets making up the desired target
+    :param output_dir path to the output directory where the plot will be saved
     '''
         
     def __init__(
@@ -42,16 +47,17 @@ class InteractiveCorpusPlot:
             normalised = True,
             on_click_callback: Optional[Callable[[AudioSnippet], None]] = None,
             path_to_draw: Optional[ConcatenationPath] = None,
+            target_snippets: List[AudioSnippet] = None,
             output_dir: Path | None = None
             
     ):
         self.snippets = snippets
 
-        features_to_plot = [x_axis_feature.name, y_axis_feature.name, colour_feature.name]
-        plot_data = {feat_name: [] for feat_name in features_to_plot}
+        self.features_to_plot = [x_axis_feature.name, y_axis_feature.name, colour_feature.name]
+        plot_data = {feat_name: [] for feat_name in self.features_to_plot}
 
         for snippet in snippets:
-            for feature in features_to_plot:
+            for feature in self.features_to_plot:
                 if feature in snippet.normalised_features:
                     plot_data[feature].append(snippet.normalised_features[feature] if normalised else snippet.features[feature])
                 else:
@@ -61,8 +67,10 @@ class InteractiveCorpusPlot:
         self.y_data = np.array(plot_data[y_axis_feature.name])
         self.colour_data = np.array(plot_data[colour_feature.name])
         self.title = "Corpus Normalised Feature Map" if normalised else "Corpus Feature Map"
+        self.normalised = normalised
         self.on_click_callback = on_click_callback
         self.path_to_draw = path_to_draw
+        self.target_snippets = target_snippets
 
         self.snippet_id_to_index : Dict[UUID, int] = {snippet.id: index for index, snippet in enumerate(self.snippets)}
 
@@ -104,6 +112,10 @@ class InteractiveCorpusPlot:
         # -- Step 7: Draw the audio path (if provided)
         if self.path_to_draw:
             self.draw_path()
+
+        # -- Step 8: Draw the target path (if provided)
+        if self.target_snippets:
+            self.draw_target_path()
 
         if output_dir:
             output_name = f"corpus_feature_map"  
@@ -170,6 +182,11 @@ class InteractiveCorpusPlot:
                     self.on_click_callback(snippet)
 
     def draw_path(self):
+        '''
+        Plots the path_to_draw concatenative path if it was provided
+        This superimposes a curve on the corpus map showing the path that 
+        was generated through the sounds
+        '''
         if not self.path_to_draw:
             logger.warning("Can't draw None path object")
             return
@@ -201,6 +218,39 @@ class InteractiveCorpusPlot:
                 marker='X', color='red', markersize=10,
                 alpha=0.9, label='end')
 
+        self.ax.legend()
+
+    def draw_target_path(self):
+        '''
+        Plots the target sounds representation in the corpus map
+
+        This uses the feature vector to "place" the target inside the 
+        corpus plot. This can be used to visualise how close the target 
+        path maps onto the generated concatenative path
+        '''
+        if not self.target_snippets:
+            logger.warning("Can't draw target snippet path with no snippets")
+            return
+        
+        if len(self.target_snippets) < 2:
+            logger.warning(f"Not enough target snippets ({len(self.path_to_draw)} to draw a path")
+
+        target_plot_data = {feat_name: [] for feat_name in self.features_to_plot}
+        for snippet in self.target_snippets:
+            for feature in self.features_to_plot:
+                if feature in snippet.normalised_features:
+                    target_plot_data[feature].append(snippet.normalised_features[feature] if self.normalised else snippet.features[feature])
+                else:
+                    logger.warning(f"Feature {feature} missing from target {snippet}. Excluding from plot")
+
+        x_data = np.array(target_plot_data[self.features_to_plot[0]])
+        y_data = np.array(target_plot_data[self.features_to_plot[1]])
+
+        self.ax.plot(
+            x_data, y_data, 
+            color='blue', linestyle='-', linewidth=1.5, 
+            alpha=0.8, label='Target Path')
+        
         self.ax.legend()
 
 
@@ -345,6 +395,48 @@ def plot_feature_vs_time(concatenated_signal: np.ndarray, path : ConcatenationPa
         output_name = f"feature_vs_time_{feature.name}"  
         output_path = output_dir / output_name
         logger.info(f"Saving feature plot to {output_path}")
+        fig.savefig(output_path.resolve(), dpi=150, bbox_inches='tight')
+        plt.close(fig)
+    else:
+        plt.show()
+
+def plot_target_path_distance_vs_time(target_path: List[AudioSnippet], path: ConcatenationPath, features: List[Feature], output_dir: Path | None = None):
+    '''
+    Creates a plot of the euclidean distance between the target signal and the generated concatenation path
+    based on its features.
+    
+    :param target_path: The target snippets we're synthesising against
+    :param path: The generated concatenation path
+    :param features: The feature set to use in the distance calculation
+    :param output_dir: The output directory to save the plot to
+    '''
+
+    distances = []
+
+    if len(target_path) != len(path):
+        raise ValueError(f"The target and concatenation path must be the same length. {len(target_path)} ! = {len(ConcatenationPath)}")
+
+    num_frames = len(target_path)
+
+    # Get the target & path vectors
+    target_vectors = [[s.normalised_features[feature.name] for feature in features] for s in target_path]
+    path_vectors = [[s.normalised_features[feature.name] for feature in features] for s in path.snippets_path]
+
+    # For each frame calculate the euclidean distance
+    for idx in range(num_frames):
+        distances.append(distance.euclidean(target_vectors[idx], path_vectors[idx]))
+
+
+    fig, ax = plt.subplots(figsize=(12,6))
+    ax.plot(distances)
+    ax.set_title("Target Match Distance")
+    ax.set_xlabel("Path step")
+    ax.set_ylabel("Euclidean distance in Normalised Feature Space")
+    ax.grid()
+
+    if output_dir:
+        output_name = f"target_path_distance"  
+        output_path = output_dir / output_name
         fig.savefig(output_path.resolve(), dpi=150, bbox_inches='tight')
         plt.close(fig)
     else:

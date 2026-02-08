@@ -43,7 +43,7 @@ if __name__ == "__main__":
 
     logging.info(f"Finding nearest neighbour for target: {target}")
     
-    nearest_neighbour = corpus.nearest_neighbour_search(
+    nearest_neighbour = corpus.find_best_neighbour(
         target_snippet=target,
         exclusion_list=[]
     )

@@ -28,6 +28,10 @@ DEFAULT_CONFIG = {
             'fmin': 50,
             'fmax': 5000
         }
+    },
+    'selector': {
+        'weight_target': 0.5,
+        'weight_previous': 0.5
     }
 }
 

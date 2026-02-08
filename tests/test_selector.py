@@ -1,4 +1,4 @@
-from concatenative.path.selector import generate_concatenation_path
+from concatenative.path.selector import generate_freeform_path
 from concatenative.audio import AudioSnippet
 from concatenative.analysis import Corpus
 from concatenative.config import load_config
@@ -35,7 +35,7 @@ def test_simple_selection(dummy_corpus):
     '''
     Tests nearest neighbour results are as expected
     '''
-    output_path = generate_concatenation_path(corpus=dummy_corpus, start_snippet=dummy_corpus.snippets[0], output_length_sec=0.2, cross_fade=0)
+    output_path = generate_freeform_path(corpus=dummy_corpus, start_snippet=dummy_corpus.snippets[0], output_length_sec=0.2, cross_fade=0)
     assert(len(output_path) == 2)
 
     snippets = output_path.snippets_path
