@@ -50,6 +50,20 @@ def _extract_spectral_centroid(samples: np.ndarray, sr: int, config: dict) -> fl
                                                      hop_length=feature_config['hop_length']))
 
 
+def _extract_mfccs(samples: np.ndarray, sr: int, config: dict) -> np.ndarray:
+    '''
+    Calculates the mel frequency cepstral coefficients of a signal
+    The librosa value returns n_mfcc coefficients per frame: (n_mfcc, num_frames)
+
+    The return value from this method is averaged across all the frames
+    so that the final output shape is (n_mfcc,)
+    '''
+    
+    feature_config = config['features']
+    mfccs = librosa.feature.mfcc(y=samples, sr = sr)
+    return np.mean(mfccs, axis=1)
+
+
 RMS = Feature (
     name='rms',
     extractor = _extract_rms
@@ -67,8 +81,14 @@ SPECTRAL_CENROID = Feature (
     units="Hz"
 )
 
+MFCC = Feature (
+    name="mfcc",
+    extractor = _extract_mfccs
+)
+
 FEATURE_REGISTRY = {
     'rms': RMS,
     'pitch': PITCH,
-    'spectral centroid': SPECTRAL_CENROID
+    'spectral centroid': SPECTRAL_CENROID,
+    'mfcc': MFCC
 }
