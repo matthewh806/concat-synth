@@ -58,4 +58,15 @@ def test_extractor_raises_for_wrong_extractor_value_type(dummy_signal):
     with pytest.raises(Exception):
         feature_extractor.extract(dummy_signal, 44100)
 
+
+def test_vector_feature_extractor(dummy_signal):
+    config = load_config()
+
+    feature_extractor = FeatureExtractor([
+        Feature(name="mfcc", extractor = lambda samples, sr, config : np.mean(librosa.feature.mfcc(y=samples, sr = sr), axis=1))
+    ], config=config)
+
+    with pytest.raises(Exception):
+        feature_extractor.extract(dummy_signal, sample_rate=44100)
+
     
