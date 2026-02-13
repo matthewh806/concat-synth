@@ -58,31 +58,67 @@ def calculate_normalised_features(snippets : List[AudioSnippet], feature_extract
     '''
 
     feature_bounds = {}
-    for feature in feature_extractor:
-        feature_bounds[feature.name] = {'min': float('inf'), 'max': float('-inf')}
+
+    if len(snippets) == 0:
+        logger.warning("Empty snippets list passed to calculate_normalised_features")
+        return {}
+    
+    snippet = snippets[0]
+    if len(snippet.features) == 0:
+        logger.warning("Snippet feature dictionary is empty")
+        return {}
+    
+    for feature_name, value in snippet.features.items():
+        if type(value) == np.ndarray:
+            if value.ndim != 1:
+                raise ValueError(f"Only 1 dimensional feature vectors supported, {feature_name} has {value.ndim} dimensions!")
+            values = []
+            for _ in range(value.size):
+                values.append({'min': float('inf'), 'max': float('-inf')})
+            feature_bounds[feature_name] = values
+        else:
+            feature_bounds[feature_name] = {'min': float('inf'), 'max': float('-inf')}
 
     for snippet in snippets:
         for feature_name, value in snippet.features.items():
-            if value < feature_bounds[feature_name]['min']:
-                feature_bounds[feature_name]['min'] = value
+            if type(value) == np.ndarray:
+                for idx in range(value.size):
+                    if value[idx] < feature_bounds[feature_name][idx]['min']:
+                        feature_bounds[feature_name][idx]['min'] = value[idx]
             
-            if value > feature_bounds[feature_name]['max']:
-                feature_bounds[feature_name]['max'] = value
+                    if value[idx] > feature_bounds[feature_name][idx]['max']:
+                        feature_bounds[feature_name][idx]['max'] = value[idx]    
+            else:
+                if value < feature_bounds[feature_name]['min']:
+                    feature_bounds[feature_name]['min'] = value
+            
+                if value > feature_bounds[feature_name]['max']:
+                    feature_bounds[feature_name]['max'] = value
 
+    def _normalise_feature(value: float, feat_min: float, feat_max: float):
+        if np.isnan(value):
+            return value
+        else:
+            denominator = (feat_max - feat_min) 
+            normalised_value = (value - feat_min) / denominator if denominator > 0 else 0
+            return normalised_value
+    
     for snippet in snippets:
         snippet.normalised_features = {}
         for feature_name, value in snippet.features.items():
-            feat_min = feature_bounds[feature_name]['min']
-            feat_max = feature_bounds[feature_name]['max']
-
-            if np.isnan(value):
-                snippet.normalised_features[feature_name] = value
+            if type(value) == np.ndarray:
+                snippet.normalised_features[feature_name] = []
+                for idx in range(value.size):
+                    v = value[idx]
+                    feat_min = feature_bounds[feature_name][idx]['min']    
+                    feat_max = feature_bounds[feature_name][idx]['max']    
+                    snippet.normalised_features[feature_name].append(_normalise_feature(v, feat_min, feat_max))
+                    logging.debug(f"{feature_name}: {value}, normalised: {snippet.normalised_features[feature_name]}")
             else:
-                denominator = (feat_max - feat_min) 
-                normalised_value = (value - feat_min) / denominator if denominator > 0 else 0
-                snippet.normalised_features[feature_name] = normalised_value
-
-            logging.debug(f"{feature_name}: {value:.4f}, normalised: {snippet.normalised_features[feature_name]:.4f}")
+                feat_min = feature_bounds[feature_name]['min']
+                feat_max = feature_bounds[feature_name]['max']
+                snippet.normalised_features[feature_name] = _normalise_feature(value, feat_min, feat_max)
+                logging.debug(f"{feature_name}: {value:.4f}, normalised: {snippet.normalised_features[feature_name]:.4f}")
 
     return feature_bounds
 
