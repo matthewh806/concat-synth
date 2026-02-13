@@ -66,7 +66,6 @@ def test_vector_feature_extractor(dummy_signal):
         Feature(name="mfcc", extractor = lambda samples, sr, config : np.mean(librosa.feature.mfcc(y=samples, sr = sr), axis=1))
     ], config=config)
 
-    with pytest.raises(Exception):
-        feature_extractor.extract(dummy_signal, sample_rate=44100)
-
-    
+    features = feature_extractor.extract(dummy_signal, sample_rate=44100)
+    assert type(features['mfcc']) == np.ndarray
+    assert len(features['mfcc'] == 20) # 20 is the default number of mfccs returned

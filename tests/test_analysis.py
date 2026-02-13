@@ -15,7 +15,8 @@ def dummy_feature_extractor():
     return FeatureExtractor([
         Feature(name="rms", extractor = lambda samples, config, _ : np.mean(librosa.feature.rms(y = samples))),
         Feature(name="pitch", extractor = lambda samples, sr, config : np.mean(librosa.pyin(y=samples, fmin=50, fmax=5000, sr=sr))),
-        Feature(name="spectral centroid", extractor = lambda samples, sr, config : np.mean(librosa.feature.spectral_centroid(y=samples, sr=sr)))
+        Feature(name="spectral centroid", extractor = lambda samples, sr, config : np.mean(librosa.feature.spectral_centroid(y=samples, sr=sr))),
+        Feature(name="mfcc", extractor = lambda samples, sr, config : np.mean(librosa.feature.mfcc(y=samples, sr = sr), axis=1))
     ], config)
 
 @pytest.fixture
@@ -59,8 +60,12 @@ def test_feature_normalisation(dummy_snippets, dummy_feature_extractor):
         assert len(snippet.normalised_features) == len(dummy_feature_extractor)
 
         for feature_name, feature_value in snippet.normalised_features.items():
-            dummy_feature_extractor.supports_feature(feature_name)
-            assert 0.0 <= float(feature_value) <= 1.0
+            if isinstance(feature_value, np.floating):
+                assert 0.0 <= float(feature_value) <= 1.0
+            
+            if isinstance(feature_value, list):
+                for v in feature_value:
+                    assert 0.0 <= float(v) <= 1.0
 
 
 def test_values_cover_normalisation_range(dummy_snippets, dummy_feature_extractor):
@@ -80,8 +85,14 @@ def test_values_cover_normalisation_range(dummy_snippets, dummy_feature_extracto
         max_v = float('-inf')
         for snippet in dummy_snippets:
             value = snippet.normalised_features[feature.name]
-            min_v = min(value, min_v)
-            max_v = max(value, max_v)
+            if isinstance(value, np.floating):
+                min_v = min(value, min_v)
+                max_v = max(value, max_v)
+            
+            if isinstance(value, list):
+                for v in value:
+                    min_v = min(v, min_v)
+                    max_v = max(v, max_v)
         
         assert min_v == pytest.approx(0.0)
         assert max_v == pytest.approx(1.0)
