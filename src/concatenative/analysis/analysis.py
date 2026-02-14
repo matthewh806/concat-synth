@@ -57,34 +57,63 @@ def calculate_normalised_features(snippets : List[AudioSnippet], feature_extract
     :param feature_extractor: Instance of FeatureExtractor which determines the features to normalise
     '''
 
+    if len(snippets) == 0:
+        logger.warning("Empty snippets list passed to calculate_normalised_features")
+        return {}
+    
+    if len(snippets[0].features) == 0:
+        logger.warning("Snippet feature dictionary is empty")
+        return {}
+    
     feature_bounds = {}
-    for feature in feature_extractor:
-        feature_bounds[feature.name] = {'min': float('inf'), 'max': float('-inf')}
 
-    for snippet in snippets:
-        for feature_name, value in snippet.features.items():
-            if value < feature_bounds[feature_name]['min']:
-                feature_bounds[feature_name]['min'] = value
-            
-            if value > feature_bounds[feature_name]['max']:
-                feature_bounds[feature_name]['max'] = value
+    # 1. ---- Compute the feature bounds ----
+    for feature_name in snippets[0].features.keys():
+        # Collect all values for this feature across all snippets
+        values = []
 
+        for snippet in snippets:
+            value = snippet.features[feature_name]
+            if np.isscalar(value):
+                value = np.array([value])
+
+            values.append(value)
+
+        stacked = np.vstack(values) # shape: (num_snippets, feature_dim)
+
+        feat_min = np.nanmin(stacked, axis=0)
+        feat_max = np.nanmax(stacked, axis=0)
+
+        feature_bounds[feature_name] = {
+            'min': feat_min,
+            'max': feat_max
+        }
+    
+    # 2. ---- Normalise the features ----
     for snippet in snippets:
         snippet.normalised_features = {}
+
         for feature_name, value in snippet.features.items():
+            
+            if np.isscalar(value):
+                value = np.array([value])
+
             feat_min = feature_bounds[feature_name]['min']
             feat_max = feature_bounds[feature_name]['max']
 
-            if np.isnan(value):
-                snippet.normalised_features[feature_name] = value
+            denominator = feat_max - feat_min
+            denominator[denominator == 0.0] = 1 # avoid divide by zero
+            normalised = (value - feat_min) / denominator
+
+            if normalised.size == 1:
+                snippet.normalised_features[feature_name] = float(normalised[0])
             else:
-                denominator = (feat_max - feat_min) 
-                normalised_value = (value - feat_min) / denominator if denominator > 0 else 0
-                snippet.normalised_features[feature_name] = normalised_value
-
-            logging.debug(f"{feature_name}: {value:.4f}, normalised: {snippet.normalised_features[feature_name]:.4f}")
-
+                snippet.normalised_features[feature_name] = normalised
+            
+            logging.debug(f"{feature_name}: {value} -> {snippet.normalised_features[feature_name]}")
+    
     return feature_bounds
+
 
 @timed
 def analyse_snippets(snippets: List[AudioSnippet], feature_extractor: FeatureExtractor):
@@ -138,8 +167,15 @@ def calculate_normalised_feature_values(target_snippets: List[AudioSnippet], fea
     min = feature_bounds['min']
     max = feature_bounds['max']
 
-    # TODO test for value float values?
-
     for target_snippet in target_snippets:
         feature_value = target_snippet.features[feature_name]
-        target_snippet.normalised_features[feature_name] = (feature_value - min) / (max - min)
+
+        if np.isscalar(feature_value):
+            feature_value = np.array([feature_value])
+
+        normalised_value = (feature_value - min) / (max - min)
+        
+        if feature_value.size == 1:
+            target_snippet.normalised_features[feature_name] = float(normalised_value[0])
+        else:
+            target_snippet.normalised_features[feature_name] = normalised_value

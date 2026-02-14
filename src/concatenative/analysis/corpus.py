@@ -104,7 +104,12 @@ class Corpus:
                 
                 # Use the supplied weight if available
                 weight = self.feature_weights[feature.name] if feature.name in self.feature_weights else feature.default_weight
-                feature_vector.append(np.sqrt(weight) * value)
+
+                if isinstance(value, np.ndarray):
+                    weight_multiplier = np.sqrt(weight) / value.size
+                    feature_vector.extend(weight_multiplier * value)
+                else:
+                    feature_vector.append(np.sqrt(weight) * value)
 
         return np.array(feature_vector)
     

@@ -42,9 +42,6 @@ class FeatureExtractor(Sequence):
         '''
         Extracts all of the desired features for a given audio signal
 
-        TODO Currently only supports returning a single value for the feature 
-        But this doesn't always make sense, e.g. mel coefficients.
-
         :param samples: The numpy array of the audio samples
         :param sample_rate: The sample rate of the audio
 
@@ -56,11 +53,15 @@ class FeatureExtractor(Sequence):
             try:
                 feature_value = feature.extractor(samples, sample_rate, self.config)
 
-                if not isinstance(feature_value, np.floating):
-                    raise TypeError(f"The extracted feature value {feature_value} is expected to be a numpy float not a {type(feature_value)}")
+                if isinstance(feature_value, np.ndarray):
+                    features[feature.name] = feature_value
+                elif isinstance(feature_value, np.floating):
+                    # This is to prevent issues with NaN post extraction (e.g. in the kd tree construction)
+                    features[feature.name] = feature_value if not np.isnan(feature_value) else 0.0
+                else:
+                    raise TypeError(f"The extracted feature value {feature_value} is expected to be a float or a numpy array of floats. Got a {type(feature_value)}")
 
-                # This is to prevent issues with NaN post extraction (e.g. in the kd tree construction)
-                features[feature.name] = feature_value if not np.isnan(feature_value) else 0.0
+                
             except Exception as e:
                 logger.error(f"Error extracting feature {feature.name}: {e}")
                 raise

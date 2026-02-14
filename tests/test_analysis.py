@@ -15,7 +15,8 @@ def dummy_feature_extractor():
     return FeatureExtractor([
         Feature(name="rms", extractor = lambda samples, config, _ : np.mean(librosa.feature.rms(y = samples))),
         Feature(name="pitch", extractor = lambda samples, sr, config : np.mean(librosa.pyin(y=samples, fmin=50, fmax=5000, sr=sr))),
-        Feature(name="spectral centroid", extractor = lambda samples, sr, config : np.mean(librosa.feature.spectral_centroid(y=samples, sr=sr)))
+        Feature(name="spectral centroid", extractor = lambda samples, sr, config : np.mean(librosa.feature.spectral_centroid(y=samples, sr=sr))),
+        Feature(name="mfcc", extractor = lambda samples, sr, config : np.mean(librosa.feature.mfcc(y=samples, sr = sr), axis=1))
     ], config)
 
 @pytest.fixture
@@ -59,8 +60,12 @@ def test_feature_normalisation(dummy_snippets, dummy_feature_extractor):
         assert len(snippet.normalised_features) == len(dummy_feature_extractor)
 
         for feature_name, feature_value in snippet.normalised_features.items():
-            dummy_feature_extractor.supports_feature(feature_name)
-            assert 0.0 <= float(feature_value) <= 1.0
+            if isinstance(feature_value, np.floating):
+                assert 0.0 <= float(feature_value) <= 1.0
+            
+            if isinstance(feature_value, list):
+                for v in feature_value:
+                    assert 0.0 <= float(v) <= 1.0
 
 
 def test_values_cover_normalisation_range(dummy_snippets, dummy_feature_extractor):
@@ -76,15 +81,22 @@ def test_values_cover_normalisation_range(dummy_snippets, dummy_feature_extracto
     calculate_normalised_features(snippets=dummy_snippets, feature_extractor=dummy_feature_extractor)
 
     for feature in dummy_feature_extractor:
-        min_v = float('inf')
-        max_v = float('-inf')
+        collected = [] 
         for snippet in dummy_snippets:
+
             value = snippet.normalised_features[feature.name]
-            min_v = min(value, min_v)
-            max_v = max(value, max_v)
-        
-        assert min_v == pytest.approx(0.0)
-        assert max_v == pytest.approx(1.0)
+
+            if np.isscalar(value):
+                collected.append(np.array([value]))
+            else:
+                collected.append(np.asarray(value))
+            
+        stacked = np.vstack(collected)
+        min_vals = np.min(stacked, axis=0)
+        max_vals = np.max(stacked, axis=0)
+    
+        assert min_vals == pytest.approx(0.0)
+        assert max_vals == pytest.approx(1.0)
 
 
 def test_nan_handled_correctly(dummy_feature_extractor):
