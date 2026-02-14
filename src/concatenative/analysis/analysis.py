@@ -167,8 +167,15 @@ def calculate_normalised_feature_values(target_snippets: List[AudioSnippet], fea
     min = feature_bounds['min']
     max = feature_bounds['max']
 
-    # TODO test for value float values?
-
     for target_snippet in target_snippets:
         feature_value = target_snippet.features[feature_name]
-        target_snippet.normalised_features[feature_name] = (feature_value - min) / (max - min)
+
+        if np.isscalar(feature_value):
+            feature_value = np.array([feature_value])
+
+        normalised_value = (feature_value - min) / (max - min)
+        
+        if feature_value.size == 1:
+            target_snippet.normalised_features[feature_name] = float(normalised_value[0])
+        else:
+            target_snippet.normalised_features[feature_name] = normalised_value
