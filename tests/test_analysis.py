@@ -81,21 +81,22 @@ def test_values_cover_normalisation_range(dummy_snippets, dummy_feature_extracto
     calculate_normalised_features(snippets=dummy_snippets, feature_extractor=dummy_feature_extractor)
 
     for feature in dummy_feature_extractor:
-        min_v = float('inf')
-        max_v = float('-inf')
+        collected = [] 
         for snippet in dummy_snippets:
+
             value = snippet.normalised_features[feature.name]
-            if isinstance(value, np.floating):
-                min_v = min(value, min_v)
-                max_v = max(value, max_v)
+
+            if np.isscalar(value):
+                collected.append(np.array([value]))
+            else:
+                collected.append(np.asarray(value))
             
-            if isinstance(value, list):
-                for v in value:
-                    min_v = min(v, min_v)
-                    max_v = max(v, max_v)
-        
-        assert min_v == pytest.approx(0.0)
-        assert max_v == pytest.approx(1.0)
+        stacked = np.vstack(collected)
+        min_vals = np.min(stacked, axis=0)
+        max_vals = np.max(stacked, axis=0)
+    
+        assert min_vals == pytest.approx(0.0)
+        assert max_vals == pytest.approx(1.0)
 
 
 def test_nan_handled_correctly(dummy_feature_extractor):
