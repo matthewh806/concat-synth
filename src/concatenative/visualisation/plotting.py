@@ -419,8 +419,24 @@ def plot_target_path_distance_vs_time(target_path: List[AudioSnippet], path: Con
     num_frames = len(target_path)
 
     # Get the target & path vectors
-    target_vectors = [[s.normalised_features[feature.name] for feature in features] for s in target_path]
-    path_vectors = [[s.normalised_features[feature.name] for feature in features] for s in path.snippets_path]
+    def get_feature_vector(snippets: List[AudioSnippet]):
+        feature_vector = []
+
+        for s in snippets:
+            frame_vector = []
+            for feature in features:
+                feature_value =  s.normalised_features[feature.name]
+                if isinstance(feature_value, np.ndarray):
+                    frame_vector.extend(feature_value)
+                else:
+                    frame_vector.append(feature_value)
+            
+            feature_vector.append(frame_vector)
+
+        return feature_vector
+
+    target_vectors = get_feature_vector(target_path)
+    path_vectors = get_feature_vector(path.snippets_path)
 
     # For each frame calculate the euclidean distance
     for idx in range(num_frames):
