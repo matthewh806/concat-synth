@@ -4,7 +4,7 @@ target_path = "/Users/matthew/Music/Samples/max_payne/vo/P1L0a_cam.wav"
 strategy = "onset"
 
 [features]
-names = ["rms", "pitch", "mfcc"]
+names = ["rms", "spectral centroid", "pitch"]
 weights = [0.5, 0.5, 0.5]
 frame_length = 2048
 hop_length = 512
