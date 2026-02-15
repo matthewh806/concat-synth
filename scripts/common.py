@@ -1,18 +1,32 @@
-from typing import Tuple
+from typing import Tuple, List
 from concatenative.analysis.corpus import Corpus
 from concatenative.path.concatenation_path import ConcatenationPath
 from concatenative.analysis.available_features import FEATURE_REGISTRY
+from concatenative.analysis.features import Feature
 from concatenative.analysis.feature_extractor import FeatureExtractor
 from concatenative.config import load_config
 from concatenative.utils.logger import setup_logger
 from concatenative.audio.audio_loader import find_audio_files_recursively, audio_loader
+from concatenative.path import generate_freeform_path, generate_target_based_path
 import logging
 import sys
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-def setup_corpus(config_path: str) -> Corpus:
+def get_feature_set(config: dict) -> List[Feature]:
+    feature_set = []
+    feature_names = config['features']['names']
+    for feature_name in feature_names:
+        if feature_name not in FEATURE_REGISTRY:
+            logger.warning(f"Feature {feature_name} is not supported!")
+            continue
+
+        feature_set.append(FEATURE_REGISTRY[feature_name])
+
+    return feature_set
+
+def setup_corpus(config_path: str) -> Tuple[Corpus, dict]:
 
     setup_logger(log_level=logging.DEBUG)
     config = load_config(config_path)
@@ -24,14 +38,7 @@ def setup_corpus(config_path: str) -> Corpus:
         logger.error(f"No audio files found!")
         sys.exit(1)
 
-    feature_set = []
-    feature_names = config['features']['names']
-    for feature_name in feature_names:
-        if feature_name not in FEATURE_REGISTRY:
-            logger.error(f"Feature {feature_name} is not supported!")
-            sys.exit(1)
-
-        feature_set.append(FEATURE_REGISTRY[feature_name])
+    feature_set = get_feature_set(config)
 
     snippets = [
         snippet
@@ -41,9 +48,11 @@ def setup_corpus(config_path: str) -> Corpus:
         )
     ]
 
-    return Corpus(snippets, FeatureExtractor(features=feature_set, config=config))
+    return Corpus(snippets, FeatureExtractor(features=feature_set, config=config)), config
 
 
-def setup_and_run_synthesis(config_path: str) -> Tuple[Corpus, ConcatenationPath]:
-    corpus = setup_corpus(config_path)
-    return generate_freeform_path(corpus=corpus, output_length_sec=30)
+def setup_and_run_synthesis(config_path: str) -> Tuple[Corpus, ConcatenationPath, dict]:
+    corpus, config = setup_corpus(config_path)
+    # check if its a freeform or target based path
+
+    return corpus, generate_freeform_path(corpus=corpus, output_length_sec=30), config
