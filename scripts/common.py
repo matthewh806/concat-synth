@@ -1,5 +1,6 @@
 from typing import Tuple, List
 from concatenative.analysis.corpus import Corpus
+from concatenative.analysis import calculate_normalised_feature_values, analyse_snippets
 from concatenative.path.concatenation_path import ConcatenationPath
 from concatenative.analysis.available_features import FEATURE_REGISTRY
 from concatenative.analysis.features import Feature
@@ -19,6 +20,8 @@ logger = logging.getLogger(__name__)
 This source file provides common methods to be used
 by the specific script files to avoid repeating 
 boilerplate: corpus setup, path generation etc
+
+TODO Reduce duplication from main programs concatenative_synth.py
 '''
 
 def get_parser(description="Run script"):
@@ -96,6 +99,21 @@ def setup_and_run_synthesis(config_path: str) -> Tuple[Corpus, ConcatenationPath
     :return tuple containing corpus, concatenation path and the config dict
     '''
     corpus, config = setup_corpus(config_path)
-    # TODO check if its a freeform or target based path
+    
+    if 'target_path' in config['input']:
+        logger.info("Generating a target based path...")
+        target_path = config['input']['target_path']
+        target_snippets = audio_loader(Path(target_path), 
+                                       config=config)
+        
+        # Extract the target features and normalise against the bounds from the corpus
+        analyse_snippets(target_snippets, corpus.feature_extractor)
+        for feature in get_feature_set(config):
+            calculate_normalised_feature_values(target_snippets, feature.name, corpus.get_feature_bounds(feature.name))
 
-    return corpus, generate_freeform_path(corpus=corpus, output_length_sec=30), config
+        concat_path = generate_target_based_path(corpus, target_snippets=target_snippets)
+    else:
+        logger.info("Generating a freeform path...")
+        concat_path = generate_freeform_path(corpus=corpus, output_length_sec=30)
+
+    return corpus, concat_path, config
