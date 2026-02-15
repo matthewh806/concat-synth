@@ -9,10 +9,25 @@ from concatenative.utils.logger import setup_logger
 from concatenative.audio.audio_loader import find_audio_files_recursively, audio_loader
 from concatenative.path import generate_freeform_path, generate_target_based_path
 import logging
+import argparse
 import sys
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
+
+def get_parser(description="Run script"):
+    parser = argparse.ArgumentParser(
+        description=description
+    )
+    parser.add_argument(
+        "--config", type = str, default="scripts/configs/default_config.toml",
+        help=(
+            "Provide a custom config file for tweaking under the hood settings.\n"
+            "See 'configs/default_config.toml' in the for the default example"
+        )
+    )
+
+    return parser
 
 def get_feature_set(config: dict) -> List[Feature]:
     feature_set = []
@@ -29,7 +44,7 @@ def get_feature_set(config: dict) -> List[Feature]:
 def setup_corpus(config_path: str) -> Tuple[Corpus, dict]:
 
     setup_logger(log_level=logging.DEBUG)
-    config = load_config(config_path)
+    config = load_config(Path(config_path))
 
     corpus_path = config['input']['corpus_path']
     file_paths = find_audio_files_recursively(Path(corpus_path))
