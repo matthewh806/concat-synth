@@ -80,11 +80,15 @@ def setup_corpus(config_path: str) -> Tuple[Corpus, dict]:
 
     feature_set = get_feature_set(config)
 
+    segmentation_strategy = config.get('segmentation', 'none').get('strategy', 'none')
+    max_snippets = config.get('segmentation', None).get('max_snippets', None)
+    max_clip_length = config.get('segmentation', 0.2).get('max_clip_length', 0.2)
+
     snippets = [
         snippet
         for file_path in file_paths
         for snippet in audio_loader(
-            file_path, max_clip_length = 0.2, segmentation_stratgy='slices', max_snippets=1, config=config
+            file_path, max_clip_length = max_clip_length, segmentation_stratgy=segmentation_strategy, max_snippets=max_snippets, config=config
         )
     ]
 
@@ -103,7 +107,15 @@ def setup_and_run_synthesis(config_path: str) -> Tuple[Corpus, ConcatenationPath
     if 'target_path' in config['input']:
         logger.info("Generating a target based path...")
         target_path = config['input']['target_path']
+
+        segmentation_strategy = config.get('segmentation', 'none').get('strategy', 'none')
+        max_snippets = config.get('segmentation', None).get('max_snippets', None)
+        max_clip_length = config.get('segmentation', 0.2).get('max_clip_length', 0.2)
+
         target_snippets = audio_loader(Path(target_path), 
+                                       segmentation_stratgy=segmentation_strategy,
+                                       max_snippets=max_snippets,
+                                       max_clip_length=max_clip_length,
                                        config=config)
         
         # Extract the target features and normalise against the bounds from the corpus
@@ -114,6 +126,6 @@ def setup_and_run_synthesis(config_path: str) -> Tuple[Corpus, ConcatenationPath
         concat_path = generate_target_based_path(corpus, target_snippets=target_snippets)
     else:
         logger.info("Generating a freeform path...")
-        concat_path = generate_freeform_path(corpus=corpus, output_length_sec=30)
+        concat_path = generate_freeform_path(corpus=corpus, output_length_sec=30, recent_history_size=100)
 
     return corpus, concat_path, config
