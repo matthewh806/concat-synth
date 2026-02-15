@@ -68,6 +68,6 @@ def setup_corpus(config_path: str) -> Tuple[Corpus, dict]:
 
 def setup_and_run_synthesis(config_path: str) -> Tuple[Corpus, ConcatenationPath, dict]:
     corpus, config = setup_corpus(config_path)
-    # check if its a freeform or target based path
+    # TODO check if its a freeform or target based path
 
     return corpus, generate_freeform_path(corpus=corpus, output_length_sec=30), config
