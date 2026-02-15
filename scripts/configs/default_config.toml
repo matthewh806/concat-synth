@@ -1,7 +1,10 @@
 [input]
 corpus_path = "/Users/matthew/Music/Samples/max_payne"
-target_path = "/Users/matthew/Music/Samples/max_payne/vo/P1L0a_cam.wav"
-strategy = "onset"
+
+[segmentation]
+strategy = "onsets"
+max_snippets = 10
+max_clip_length = 0.2
 
 [features]
 names = ["rms", "spectral centroid", "pitch"]
