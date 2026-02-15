@@ -15,7 +15,17 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
+'''
+This source file provides common methods to be used
+by the specific script files to avoid repeating 
+boilerplate: corpus setup, path generation etc
+'''
+
 def get_parser(description="Run script"):
+    '''
+    Gets the basic parser that most scripts use
+    Just requires a config file as input
+    '''
     parser = argparse.ArgumentParser(
         description=description
     )
@@ -30,6 +40,9 @@ def get_parser(description="Run script"):
     return parser
 
 def get_feature_set(config: dict) -> List[Feature]:
+    '''
+    Get a list of features that are supported in the config file
+    '''
     feature_set = []
     feature_names = config['features']['names']
     for feature_name in feature_names:
@@ -41,8 +54,17 @@ def get_feature_set(config: dict) -> List[Feature]:
 
     return feature_set
 
-def setup_corpus(config_path: str) -> Tuple[Corpus, dict]:
 
+def setup_corpus(config_path: str) -> Tuple[Corpus, dict]:
+    '''
+    Most basic setup
+
+    1. Loads the config data into a dictionary
+    2. Loads all of the snippets and performs segmentation
+    3. Constructs a corpus of all the sounds (this performs analysis too)
+
+    :return tuple containing Corpus and the config dict
+    '''
     setup_logger(log_level=logging.DEBUG)
     config = load_config(Path(config_path))
 
@@ -67,6 +89,12 @@ def setup_corpus(config_path: str) -> Tuple[Corpus, dict]:
 
 
 def setup_and_run_synthesis(config_path: str) -> Tuple[Corpus, ConcatenationPath, dict]:
+    '''
+    Does the basic setup (load audio, segment, construct corpus and analyse)
+    And then generates a concatenation path based on the parameters in the config
+
+    :return tuple containing corpus, concatenation path and the config dict
+    '''
     corpus, config = setup_corpus(config_path)
     # TODO check if its a freeform or target based path
 
