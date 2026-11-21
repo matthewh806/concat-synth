@@ -11,3 +11,5 @@ plots/*
 !plots/.gitkeep
 
 config.toml
+scripts/configs/*
+!scripts/configs/default_config.toml

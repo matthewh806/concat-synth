@@ -1,18 +1,10 @@
 from pathlib import Path
 import matplotlib.pyplot as plt
 import sounddevice as sd
-from concatenative.audio.audio_loader import audio_loader, find_audio_files_recursively
-from concatenative.analysis.corpus import Corpus
-from concatenative.analysis.available_features import FEATURE_REGISTRY
-from concatenative.analysis.feature_extractor import FeatureExtractor
-from concatenative.config import load_config
-from concatenative.path.selector import generate_freeform_path
 from concatenative.visualisation.plotting import InteractiveCorpusPlot
-from concatenative.utils.logger import setup_logger
+from common import setup_and_run_synthesis, get_feature_set, get_parser
 import logging
 import sys
-
-ROOT = Path(__file__).resolve().parents[1]
 
 def play_snippet_audio_callback(snippet):
     '''
@@ -35,42 +27,22 @@ def play_snippet_audio_callback(snippet):
 
 if __name__ == "__main__":
 
-    setup_logger(log_level=logging.DEBUG)
-    logger = logging.getLogger(__name__)
+    parser = get_parser()
+    args = parser.parse_args()
 
-    audio_dir = Path(ROOT / "audio_downloads")
-    file_paths = find_audio_files_recursively(audio_dir)
+    corpus, concat_path, config = setup_and_run_synthesis(args.config)
+    print(concat_path.get_stats())    
+    feature_set = get_feature_set(config)
 
-    if len(file_paths) == 0:
-        logger.error(f"No audio files found!")
+    if len(feature_set) < 3:
+        logging.error(f"Need at least 3 features to plot the feature map, got {len(feature_set)}")
         sys.exit(1)
 
-    rms = FEATURE_REGISTRY['rms']
-    spectral_centroid = FEATURE_REGISTRY['spectral centroid']
-    pitch = FEATURE_REGISTRY['pitch']
-    feature_set = [
-        rms, spectral_centroid, pitch
-    ]
-
-    config = load_config()
-    snippets = [
-        snippet
-        for file_path in file_paths
-        for snippet in audio_loader(
-            file_path, max_clip_length = 0.2, segmentation_stratgy='slices', max_snippets=1, config=config
-        )
-    ]
-    corpus = Corpus(snippets, FeatureExtractor(features=feature_set, config=config))
-    print(f"Number of duplicate snippets: {corpus.get_number_of_duplicates()}")
-    concatenation_path = generate_freeform_path(corpus=corpus, output_length_sec=20)
-
-    print(concatenation_path.get_stats())    
-
     plot = InteractiveCorpusPlot(corpus.snippets, 
-                                 rms, 
-                                 spectral_centroid, 
-                                 pitch, 
+                                 feature_set[0], 
+                                 feature_set[1], 
+                                 feature_set[2], 
                                  normalised=False,
                                  on_click_callback=play_snippet_audio_callback, 
-                                 path_to_draw=concatenation_path)
+                                 path_to_draw=concat_path)
     plt.show()

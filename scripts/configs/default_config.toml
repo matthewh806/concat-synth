@@ -1,0 +1,38 @@
+[input]
+corpus_path = "/Users/matthew/Music/Samples/max_payne"
+
+[segmentation]
+strategy = "onsets"
+max_snippets = 10
+max_clip_length = 0.2
+
+[features]
+names = ["rms", "spectral centroid", "pitch"]
+weights = [0.5, 0.5, 0.5]
+frame_length = 2048
+hop_length = 512
+
+[synthesis]
+output_length_s = 10
+
+# Everything below is copied from the regular config
+
+[segmentation.slices]
+segment_duration_s = 0.3
+
+[segmentation.onsets]
+hop_length = 512
+backtrack = false
+normalise = false
+max_segment_length = 0.2
+
+[segmentation.none]
+segment_duration_s = 0.2
+
+[features.pitch]
+fmin = 50
+fmax = 500
+
+[selector]
+weight_target = 0.9
+weight_previous = 0.1
