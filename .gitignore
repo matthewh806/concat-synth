@@ -1,5 +1,9 @@
 .DS_Store
-.vscode/
+.vscode/*
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/tasks.json
+!.vscode/extensions.json
 __pycache__/
 *.pyc
 audio_downloads
