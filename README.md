@@ -15,7 +15,7 @@
 
   ## Requirements
 
-   - Python 3.9+
+   - [uv](https://docs.astral.sh/uv/getting-started/installation/) (it will install Python 3.13+ for you if needed)
    - A [Freesound](https://freesound.org/home/app_new/) API Key (only required for the freesound backend).
    - `ffmpeg` must be installed and available in your system's PATH (for audio file downloading via youtube).
 
@@ -24,23 +24,26 @@
    1. Clone the repository:
 
    ```
-    git clone https://github.com/matthewh806/concatenative.git
-    cd concatenative
+    git clone https://github.com/matthewh806/concat-synth.git
+    cd concat-synth
    ```
       
 
-   2. Create and activate a virtual environment:
-   ```
-   python3 -m venv .venv
-   source .venv/bin/activate
-   ```
-
-   3. Install the project in editable mode:
-      This command will install the necessary dependencies and make the concat-synth command available in your environment.
+   2. Install the project and its dependencies:
+      This creates a `.venv` virtual environment, installs the locked dependencies from `uv.lock`
+      and installs the project in editable mode, making the `concat-synth` command available.
    
    ```
-   pip install -e .
+   uv sync
    ```
+
+   3. Run commands through uv (no need to activate the virtual environment):
+   ```
+   uv run concat-synth --help
+   ```
+
+      Alternatively, activate the environment with `source .venv/bin/activate` and call `concat-synth` directly,
+      as in the usage examples below.
 
   ## Configuration
 
@@ -115,14 +118,10 @@ concat-synth download youtube --words words.txt --max-snippets 32 --out youtube_
   
   ## Testing
 
-  The project uses `pytest` as a test suite. In order to run the tests, install the project in editable mode:
-
-  ```
-  pip install -e '.[dev]'
-  ```
+  The project uses `pytest` as a test suite. It is part of the `dev` dependency group, which `uv sync` installs by default.
 
   To execute all of the tests simply run:
 
   ```
-  pytest
+  uv run pytest
   ```

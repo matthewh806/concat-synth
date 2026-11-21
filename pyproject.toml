@@ -24,7 +24,7 @@ dependencies = [
     "matplotlib"
 ]
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
   "pytest",
 ]
